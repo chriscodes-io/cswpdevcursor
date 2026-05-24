@@ -60,3 +60,7 @@ Use the **One CLI** for third-party platform APIs (Gmail, Slack, Shopify, HubSpo
 **Conventions:** Always pass `--agent` after `one` for structured JSON. Do not use One for `one init` / MCP install unless the user is setting up One itself.
 
 **This repo:** Stripe payments in-app use the existing FastAPI `stripe_service` + webhooks; use **One** when the agent needs to call Stripe (or other services) from the shell on Chris’s connected accounts (e.g. ops, debugging, one-off API tasks).
+
+## Lead qualification agent (Pica)
+
+`lead-qualification-agent/` — Gmail (`Leads` label) → OpenAI score → HubSpot contact → Slack `#sales-leads`. Uses **Pica** passthrough (`PICA_SECRET` + `GMAIL_CONNECTION_KEY`, `HUBSPOT_CONNECTION_KEY`, `SLACK_CONNECTION_KEY`). Run: `cd lead-qualification-agent && npm run qualify` (or `qualify:dry`). See `lead-qualification-agent/README.md`. For new Pica tools, follow `.cursor/rules/buildkit.mdc`.
