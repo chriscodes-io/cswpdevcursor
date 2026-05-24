@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 15% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 15% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 15% 10%;
+    --primary: 204 70% 28%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 160 22% 32%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 46%;
+    --accent: 200 16% 96%;
+    --accent-foreground: 220 15% 15%;
+    --destructive: 6 78% 52%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 12% 88%;
+    --input: 220 12% 88%;
+    --ring: 204 70% 28%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 0 0% 3%;
+    --foreground: 0 0% 94%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 94%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 94%;
+    --primary: 152 100% 50%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 94%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 53%;
+    --accent: 152 100% 50% / 0.08;
+    --accent-foreground: 152 100% 50%;
+    --destructive: 0 100% 65%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 152 100% 50%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+  }
+
+  .font-mono-brand {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+}
