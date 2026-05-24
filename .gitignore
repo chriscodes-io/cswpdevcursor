@@ -84,3 +84,6 @@ agenthub/agents/youtube/db
 
 # Mobile development
 android-sdk/ frontend/node_modules/.cache/default-development/1.pack
+
+# Local Netlify folder
+.netlify
