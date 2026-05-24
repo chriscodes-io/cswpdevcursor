@@ -362,6 +362,7 @@ class SEOAudit(BaseModel):
     
     audit_date: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     duration_seconds: Optional[float] = None
+    action_plan: Optional[Dict] = None
 
 
 class SEOAuditRequest(BaseModel):

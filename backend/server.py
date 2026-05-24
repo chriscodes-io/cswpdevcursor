@@ -30,6 +30,7 @@ from .wp_analyzers import (
     AccessibilityAnalyzer,
     WordPressDetector
 )
+from .seo_action_plan import build_action_plan, build_report_payload
 from .pagespeed_client import (
     fetch_pagespeed_insights,
     map_pagespeed_to_seo_audit,
@@ -554,6 +555,8 @@ async def run_seo_audit(audit_request: SEOAuditRequest, current_user: dict = Dep
             
             duration_seconds=duration
         )
+
+        audit.action_plan = build_action_plan(audit.model_dump())
         
         # Save to database
         doc = audit.model_dump()
@@ -601,6 +604,40 @@ async def run_seo_audit(audit_request: SEOAuditRequest, current_user: dict = Dep
         raise HTTPException(status_code=500, detail=f"Audit failed: {str(e)}")
 
 
+async def _get_audit_doc(audit_id: str) -> dict:
+    doc = await db.seo_audits.find_one({"id": audit_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Audit not found")
+    if isinstance(doc.get("audit_date"), str):
+        doc["audit_date"] = datetime.fromisoformat(doc["audit_date"])
+    return doc
+
+
+@api_router.get("/seo-audit/report/{audit_id}")
+async def get_seo_audit_report(
+    audit_id: str,
+    company: str = "",
+    created_by: str = "",
+    current_user: dict = Depends(get_current_user),
+):
+    """Template 129 JSON report for a saved audit."""
+    doc = await _get_audit_doc(audit_id)
+    if not doc.get("action_plan"):
+        doc["action_plan"] = build_action_plan(doc)
+    return build_report_payload(doc, company=company, created_by=created_by)
+
+
+@api_router.get("/seo-audit/{audit_id}/action-plan")
+async def get_seo_audit_action_plan(
+    audit_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Action plan only for a saved audit (recomputed if missing)."""
+    doc = await _get_audit_doc(audit_id)
+    plan = doc.get("action_plan") or build_action_plan(doc)
+    return plan
+
+
 @api_router.get("/seo-audit/{project_id}", response_model=List[SEOAudit])
 async def get_seo_audits(project_id: str, skip: int = 0, limit: int = 100, current_user: dict = Depends(get_current_user)):
     """Get all SEO audits for a project"""
@@ -609,6 +646,8 @@ async def get_seo_audits(project_id: str, skip: int = 0, limit: int = 100, curre
     for audit in audits:
         if isinstance(audit.get('audit_date'), str):
             audit['audit_date'] = datetime.fromisoformat(audit['audit_date'])
+        if not audit.get("action_plan"):
+            audit["action_plan"] = build_action_plan(audit)
     return audits
 
 

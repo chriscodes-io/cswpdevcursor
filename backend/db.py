@@ -6,8 +6,10 @@ from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
 
 # Load env BEFORE building the client (db.py may be imported before server.py
-# gets a chance to call load_dotenv)
-load_dotenv(Path(__file__).parent / ".env")
+# gets a chance to call load_dotenv). Secrets belong in .env.local (gitignored).
+_env_dir = Path(__file__).parent
+load_dotenv(_env_dir / ".env")
+load_dotenv(_env_dir / ".env.local", override=True)
 
 _client = AsyncIOMotorClient(os.environ["MONGO_URL"])
 db = _client[os.environ["DB_NAME"]]

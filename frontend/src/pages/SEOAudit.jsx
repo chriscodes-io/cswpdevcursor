@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, AlertCircle, CheckCircle, Info, TrendingUp, Clock, Shield, Zap, Eye, Wrench, Loader2, Smartphone, Monitor } from 'lucide-react';
+import { Search, AlertCircle, CheckCircle, Info, TrendingUp, Clock, Shield, Zap, Eye, Wrench, Loader2, Smartphone, Monitor, Download, FileSpreadsheet } from 'lucide-react';
+import SEOActionPlan from '../components/SEOActionPlan';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { projectsAPI, seoAuditAPI } from '../lib/api';
+import { projectsAPI, seoAuditAPI, downloadSeoReportJson } from '../lib/api';
 import { logError } from '../lib/logger';
 import { track, MixpanelEvents } from '../lib/mixpanel';
 import { RadialBarChart, RadialBar, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
@@ -17,6 +18,7 @@ const SEOAudit = () => {
   const [audit, setAudit] = useState(null);
   const [auditHistory, setAuditHistory] = useState([]);
   const [pagespeedEnabled, setPagespeedEnabled] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const loadProjects = useCallback(async () => {
     try {
@@ -98,6 +100,24 @@ const SEOAudit = () => {
       info: <CheckCircle className="w-5 h-5 text-blue-400" />
     };
     return icons[severity] || icons.info;
+  };
+
+  const handleExportReportJson = async () => {
+    if (!audit?.id) return;
+    setExporting(true);
+    try {
+      const project = projects.find((p) => p.id === selectedProject);
+      const report = await seoAuditAPI.getReport(audit.id, {
+        company: project?.name || '',
+        createdBy: '',
+      });
+      const slug = (audit.url || 'report').replace(/https?:\/\//, '').replace(/[^\w.-]+/g, '-');
+      downloadSeoReportJson(report, `seo-report-${slug}.json`);
+    } catch (error) {
+      alert(error.message || 'Failed to export report');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const categoryIcons = {
@@ -388,6 +408,34 @@ const SEOAudit = () => {
               );
             })}
           </div>
+
+          {audit.action_plan && (
+            <>
+              <SEOActionPlan actionPlan={audit.action_plan} />
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleExportReportJson}
+                  disabled={exporting}
+                  className="border-[#1a1a1a] text-gray-300 hover:text-white hover:border-[#00FF9D]/50"
+                  data-testid="export-report-json-btn"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {exporting ? 'Exporting…' : 'Export report (JSON)'}
+                </Button>
+                <a
+                  href={`${process.env.PUBLIC_URL || ''}/templates/CSWP-SEO-Report-Template.xlsx`}
+                  download="CSWP-SEO-Report-Template.xlsx"
+                  className="inline-flex items-center px-4 py-2 text-sm border border-[#1a1a1a] rounded-md text-gray-300 hover:text-white hover:border-[#00FF9D]/50 transition-colors"
+                  data-testid="download-excel-template-btn"
+                >
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Download SEO Report Template (Excel)
+                </a>
+              </div>
+            </>
+          )}
 
           {/* WCAG Level */}
           {audit.wcag_level && (

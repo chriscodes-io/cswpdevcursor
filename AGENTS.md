@@ -11,8 +11,8 @@
 | Item | Detail |
 |------|--------|
 | Client SDK | `mixpanel-browser` |
-| Client token | `REACT_APP_MIXPANEL_TOKEN` in `frontend/.env` |
-| Server token | `MIXPANEL_TOKEN` in `backend/.env` (optional, same project) |
+| Client token | `REACT_APP_MIXPANEL_TOKEN` in `frontend/.env.local` (CRA also reads `.env`) |
+| Server token | `MIXPANEL_TOKEN` in `backend/.env.local` (optional, same project) |
 | Init | `frontend/src/lib/mixpanel.js` → `initMixpanel()` from `frontend/src/index.js` |
 | Server helper | `backend/analytics.py` → `track_event()` |
 | Wrapper | Import `track`, `identifyUser`, `resetUser`, `trackPageView`, `MixpanelEvents` from `@/lib/mixpanel` |

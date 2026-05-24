@@ -30,10 +30,16 @@ next-env.d.ts
 dist/
 dist
 
-# Environment files (comprehensive coverage)
-
+# Environment files — never commit secrets
 *token.json*
 *credentials.json*
+.env
+.env.local
+**/.env
+**/.env.local
+# Allow committed templates only
+!**/.env.example
+!**/.env.local.example
 
 # Logs and debug files
 npm-debug.log*
@@ -78,11 +84,3 @@ agenthub/agents/youtube/db
 
 # Mobile development
 android-sdk/ frontend/node_modules/.cache/default-development/1.pack
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*

@@ -244,8 +244,37 @@ export const seoAuditAPI = {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
+  },
+
+  getActionPlan: async (auditId) => {
+    const response = await fetch(`${API_URL}/api/seo-audit/${auditId}/action-plan`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  },
+
+  getReport: async (auditId, { company = '', createdBy = '' } = {}) => {
+    const params = new URLSearchParams();
+    if (company) params.set('company', company);
+    if (createdBy) params.set('created_by', createdBy);
+    const qs = params.toString();
+    const response = await fetch(
+      `${API_URL}/api/seo-audit/report/${auditId}${qs ? `?${qs}` : ''}`,
+      { headers: getAuthHeaders() }
+    );
+    return handleResponse(response);
   }
 };
+
+export function downloadSeoReportJson(report, filename = 'seo-report.json') {
+  const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 // Public Contact API (no auth)
 export const contactAPI = {
