@@ -1,0 +1,25 @@
+[build]
+  command = "npm install"
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["backend/templates/**"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/audit/share/:token"
+  to = "/.netlify/functions/api/audit/share/:token"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/dashboard"
+  to = "/dashboard.html"
+  status = 200

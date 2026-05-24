@@ -384,6 +384,10 @@ const LandingPage = () => {
             eight years I&apos;ve sat on both sides of the table — running technical audits as a consultant and shipping
             the fixes as a developer.
           </p>
+          <p className="text-[15px] text-[#888] leading-[1.8] mb-4">
+            Diploma in IT (Web Front-End &amp; Back-End Web Development) and Dual Diploma in Business (Marketing &amp;
+            Advertising).
+          </p>
           <p className="text-[15px] text-[#888] leading-[1.8]">
             Most agencies hand you a 60-page audit and walk away. Most developers see SEO as someone else&apos;s problem. I
             do both, end to end, so your site actually gets faster, cleaner and more visible — not just documented.
