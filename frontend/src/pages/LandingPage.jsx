@@ -241,6 +241,7 @@ const LandingPage = () => {
   ];
 
   const [featuredCase, ...otherCases] = caseStudies;
+  const FeaturedServiceIcon = featuredService.icon;
 
   return (
     <div className="min-h-screen bg-[#080808] text-[#f0f0f0]" data-testid="landing-page">
@@ -417,7 +418,7 @@ const LandingPage = () => {
         </div>
         <div className="bg-[#0f0f0f] border border-t-0 border-[#1e1e1e] rounded-b-xl p-8 hover:bg-[#141414] transition-colors flex flex-col md:flex-row md:items-center gap-6">
           <div className="w-11 h-11 bg-[#00FF7F]/[0.08] rounded-[9px] flex items-center justify-center text-[#00FF7F] shrink-0">
-            <featuredService.icon className="w-5 h-5" strokeWidth={1.5} />
+            <FeaturedServiceIcon className="w-5 h-5" strokeWidth={1.5} />
           </div>
           <div className="flex-1">
             <h3 className="text-base font-semibold mb-2">{featuredService.title}</h3>
