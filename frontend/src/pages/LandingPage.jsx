@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Search,
-  Activity,
   Zap,
-  TrendingUp,
-  Clock,
   ClipboardList,
   Code2,
   Shield,
@@ -262,10 +259,10 @@ const LandingPage = () => {
   ];
 
   const stats = [
-    { num: '150+', label: 'Projects delivered', context: 'Audits, rebuilds & implementations', icon: Activity },
-    { num: '94', label: 'Avg Lighthouse score', context: 'Post-engagement performance', icon: Zap },
-    { num: '+312%', label: 'Avg organic traffic lift', context: 'Selected client engagements', icon: TrendingUp },
-    { num: '8yr', label: 'Technical SEO & web eng', context: 'Strategy through to production', icon: Clock },
+    { num: '150+', label: 'Projects delivered' },
+    { num: '94', label: 'Avg Lighthouse score' },
+    { num: '+312%', label: 'Avg organic traffic lift' },
+    { num: '8yr', label: 'Technical SEO & web eng' },
   ];
 
   const [featuredCase, ...otherCases] = caseStudies;
@@ -317,11 +314,11 @@ const LandingPage = () => {
       </nav>
 
       {/* Hero */}
-      <section id="top" className="px-[6%] pt-[90px] pb-[90px] grid lg:grid-cols-[1fr_380px] gap-16 items-center min-h-[calc(100vh-62px)]">
+      <section id="top" className="px-[6%] pt-[90px] pb-[90px] min-h-[calc(100vh-62px)]">
         <div>
           <h1 className="text-[clamp(42px,6vw,68px)] font-semibold leading-[1.06] tracking-[-0.03em] mb-[22px]">
             Technical SEO strategy &amp; implementation for <RotatingAudience words={HERO_AUDIENCES} />
-            <span className="block mt-3 text-[clamp(17px,2.2vw,22px)] font-medium text-[#00FF7F] leading-snug tracking-[-0.02em]">
+            <span className="block mt-3 text-[clamp(17px,2.2vw,22px)] font-medium text-[#f0f0f0] leading-snug tracking-[-0.02em]">
               fixes shipped, not just documented.
             </span>
           </h1>
@@ -334,9 +331,14 @@ const LandingPage = () => {
               Start a project
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
             </BtnPrimary>
-            <BtnGhost onClick={scrollTo('work')} data-testid="hero-cta-work">
-              See client work
-            </BtnGhost>
+            <button
+              type="button"
+              onClick={scrollTo('audit')}
+              data-testid="hero-cta-audit"
+              className="inline-flex items-center justify-center gap-2 px-[22px] py-3 rounded-lg text-sm font-semibold border-2 border-[#00FF7F] bg-[#00FF7F]/15 text-[#f0f0f0] hover:bg-[#00FF7F]/25 hover:border-[#00FF7F] hover:-translate-y-px transition-all shadow-[0_0_32px_rgba(0,255,127,0.28)]"
+            >
+              FREE Instant Audit
+            </button>
           </div>
           <button
             type="button"
@@ -345,23 +347,6 @@ const LandingPage = () => {
           >
             Or run a free WordPress audit →
           </button>
-        </div>
-        <div className="hidden lg:flex flex-col gap-2.5">
-          {stats.map(({ num, label, context, icon: Icon }) => (
-            <div
-              key={label}
-              className="bg-[#0f0f0f] border border-[#1e1e1e] rounded-xl px-6 py-5 flex items-center justify-between hover:border-[#00FF7F]/22 hover:bg-[#141414] transition-colors"
-            >
-              <div>
-                <div className="font-mono-brand text-[30px] font-semibold text-[#00FF7F] leading-none tabular-nums">{num}</div>
-                <div className="text-[11px] text-[#f0f0f0] uppercase tracking-[0.06em] mt-1.5 font-medium">{label}</div>
-                <div className="text-[10px] text-[#555] mt-0.5 leading-snug max-w-[200px]">{context}</div>
-              </div>
-              <div className="w-[42px] h-[42px] bg-[#00FF7F]/[0.08] rounded-lg flex items-center justify-center text-[#00FF7F] shrink-0">
-                <Icon className="w-5 h-5" strokeWidth={1.5} />
-              </div>
-            </div>
-          ))}
         </div>
       </section>
 
