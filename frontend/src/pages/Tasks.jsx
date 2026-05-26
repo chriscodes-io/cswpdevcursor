@@ -6,7 +6,6 @@ import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { tasksAPI, projectsAPI } from '../lib/api';
 import { logError } from '../lib/logger';
-import { track, MixpanelEvents } from '../lib/mixpanel';
 
 const Tasks = () => {
   const [tasks, setTasks] = useState([]);
@@ -61,12 +60,6 @@ const Tasks = () => {
         status: 'todo'
       };
       const created = await tasksAPI.create(submitData);
-      track(MixpanelEvents.TASK_CREATED, {
-        task_id: created.id,
-        project_id: created.project_id,
-        priority: created.priority,
-        status: created.status,
-      });
       setIsModalOpen(false);
       setFormData({
         title: '',
@@ -97,14 +90,6 @@ const Tasks = () => {
     const previousStatus = task?.status;
     try {
       await tasksAPI.update(taskId, { status: newStatus });
-      if (task && previousStatus !== newStatus) {
-        track(MixpanelEvents.TASK_STATUS_CHANGED, {
-          task_id: taskId,
-          project_id: task.project_id,
-          previous_status: previousStatus,
-          new_status: newStatus,
-        });
-      }
       loadData();
     } catch (error) {
       logError('Error updating task:', error);

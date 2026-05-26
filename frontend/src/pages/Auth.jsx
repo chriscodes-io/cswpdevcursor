@@ -5,9 +5,8 @@ import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { authAPI } from '../lib/api';
-import { track, MixpanelEvents } from '../lib/mixpanel';
 
-// Animation configs extracted to prevent re-renders
+// Animation configs
 const containerAnimation = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
@@ -63,12 +62,6 @@ const Auth = ({ onLogin }) => {
       }
 
       onLogin(response.user, response.access_token);
-
-      if (isSignUp) {
-        track(MixpanelEvents.SIGN_UP_COMPLETED, { sign_up_method: 'email' });
-      } else {
-        track(MixpanelEvents.SIGN_IN_COMPLETED, { sign_in_method: 'email' });
-      }
     } catch (err) {
       setError(err.message || 'Authentication failed');
     } finally {

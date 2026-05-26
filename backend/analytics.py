@@ -1,25 +1,10 @@
-"""Server-side Mixpanel tracking (optional — requires MIXPANEL_TOKEN in env)."""
+"""Analytics hook shim.
 
-import logging
-import os
+Mixpanel has been removed from this repo. This module remains so the API layer
+can keep calling `track_event(...)` without breaking runtime behavior.
+"""
+
 from typing import Any, Dict, Optional
-
-logger = logging.getLogger(__name__)
-
-_mp = None
-
-
-def is_configured() -> bool:
-    return bool(os.environ.get("MIXPANEL_TOKEN"))
-
-
-def _client():
-    global _mp
-    if _mp is None and is_configured():
-        from mixpanel import Mixpanel
-
-        _mp = Mixpanel(os.environ["MIXPANEL_TOKEN"])
-    return _mp
 
 
 def track_event(
@@ -29,17 +14,5 @@ def track_event(
     *,
     insert_id: Optional[str] = None,
 ) -> None:
-    """Fire-and-forget server event. Never raises to callers."""
-    mp = _client()
-    if not mp or not distinct_id:
-        return
-
-    props = dict(properties or {})
-    props["platform"] = props.get("platform", "server")
-    if insert_id:
-        props["$insert_id"] = insert_id
-
-    try:
-        mp.track(distinct_id, event, props)
-    except Exception as exc:
-        logger.warning("Mixpanel track failed for %s: %s", event, exc)
+    # no-op
+    _ = (distinct_id, event, properties, insert_id)

@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { clientsAPI } from '../lib/api';
 import { logError } from '../lib/logger';
-import { track, MixpanelEvents } from '../lib/mixpanel';
 
 const Clients = () => {
   const [clients, setClients] = useState([]);
@@ -82,16 +81,8 @@ const Clients = () => {
     try {
       if (editingClient) {
         await clientsAPI.update(editingClient.id, formData);
-        track(MixpanelEvents.CLIENT_UPDATED, {
-          client_id: editingClient.id,
-          status: formData.status,
-        });
       } else {
-        const created = await clientsAPI.create(formData);
-        track(MixpanelEvents.CLIENT_CREATED, {
-          client_id: created.id,
-          status: created.status || formData.status,
-        });
+        await clientsAPI.create(formData);
       }
       setIsModalOpen(false);
       loadClients();

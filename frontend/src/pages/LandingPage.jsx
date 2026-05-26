@@ -16,7 +16,6 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { contactAPI } from '../lib/api';
-import { track, MixpanelEvents } from '../lib/mixpanel';
 
 const scrollTo = (id) => (e) => {
   e.preventDefault();
@@ -56,6 +55,36 @@ const OutcomeChip = ({ children }) => (
   </span>
 );
 
+const HERO_AUDIENCES = ['Agencies', 'SaaS', 'ecommerce', 'SMB'];
+
+function RotatingAudience({ words }) {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    let timeoutId;
+    const interval = setInterval(() => {
+      setVisible(false);
+      timeoutId = setTimeout(() => {
+        setIndex((current) => (current + 1) % words.length);
+        setVisible(true);
+      }, 280);
+    }, 2800);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeoutId);
+    };
+  }, [words.length]);
+
+  return (
+    <span className="text-[#00FF7F] inline-block min-w-[11ch] text-left" aria-live="polite">
+      <span className={`inline-block transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+        {words[index]}
+      </span>
+    </span>
+  );
+}
+
 const LandingPage = () => {
   const [form, setForm] = useState({ name: '', email: '', website: '', message: '' });
   const [status, setStatus] = useState({ state: 'idle', error: '' });
@@ -84,7 +113,6 @@ const LandingPage = () => {
     setStatus({ state: 'sending', error: '' });
     try {
       await contactAPI.submit(form);
-      track(MixpanelEvents.CONTACT_FORM_SUBMITTED, { has_website: Boolean(form.website?.trim()) });
       setStatus({ state: 'sent', error: '' });
       setForm({ name: '', email: '', website: '', message: '' });
     } catch (err) {
@@ -198,8 +226,8 @@ const LandingPage = () => {
     },
     {
       icon: Code2,
-      title: 'High-performance headless WordPress',
-      desc: 'Next.js + WP Engine/Faust.js for speed, security, and editor workflow without sacrificing SEO.',
+      title: 'Headless + modern CMS builds',
+      desc: 'WordPress, Webflow, Shopify, Wix Studio, Framer, and AI-focused CMS setups with performance and SEO baked in.',
     },
     {
       icon: Zap,
@@ -275,14 +303,14 @@ const LandingPage = () => {
           ))}
           <li>
             <a
-              href="#contact"
-              onClick={scrollTo('contact')}
+              href="#audit"
+              onClick={scrollTo('audit')}
               className={`text-[13px] font-semibold bg-[#00FF7F] text-black px-4 py-[7px] rounded-lg no-underline hover:opacity-[0.82] transition-opacity ${
                 navScrolled ? 'shadow-[0_0_20px_rgba(0,255,127,0.15)]' : ''
               }`}
-              data-testid="nav-hire-me"
+              data-testid="nav-free-audit"
             >
-              Start a project →
+              Free Audit →
             </a>
           </li>
         </ul>
@@ -291,13 +319,11 @@ const LandingPage = () => {
       {/* Hero */}
       <section id="top" className="px-[6%] pt-[90px] pb-[90px] grid lg:grid-cols-[1fr_380px] gap-16 items-center min-h-[calc(100vh-62px)]">
         <div>
-          <p className="font-mono-brand text-[11px] tracking-[0.07em] uppercase text-[#00FF7F] mb-[22px] flex items-center gap-2">
-            <span className="w-5 h-px bg-[#00FF7F]" />
-            For SaaS, ecommerce, publishers &amp; agencies · Australia · Remote worldwide
-          </p>
           <h1 className="text-[clamp(42px,6vw,68px)] font-semibold leading-[1.06] tracking-[-0.03em] mb-[22px]">
-            Technical SEO strategy and implementation —{' '}
-            <span className="text-[#00FF7F]">fixes shipped, not just documented.</span>
+            Technical SEO strategy &amp; implementation for <RotatingAudience words={HERO_AUDIENCES} />
+            <span className="block mt-3 text-[clamp(17px,2.2vw,22px)] font-medium text-[#00FF7F] leading-snug tracking-[-0.02em]">
+              fixes shipped, not just documented.
+            </span>
           </h1>
           <p className="text-[15px] text-[#888] leading-[1.75] max-w-[520px] mb-9">
             I help growth teams fix technical SEO faster by owning both the audit and the implementation. No handoffs
@@ -527,6 +553,10 @@ const LandingPage = () => {
             I&apos;m a technical SEO and web engineer in Australia, working with teams worldwide. For eight years
             I&apos;ve run audits as a consultant and shipped the fixes as a developer.
           </p>
+          <p className="text-[15px] text-[#888] leading-[1.8] mb-4">
+            Diploma of IT (Front-End &amp; Back-End Web Development) &amp; Dual Diploma of Business (Marketing &amp;
+            Advertising).
+          </p>
           <p className="text-[15px] text-[#888] leading-[1.8]">
             Most engagements stop at documentation. I stay through implementation and verification so Search Console
             and analytics show the change — not just the ticket closed.
@@ -554,7 +584,7 @@ const LandingPage = () => {
               Tell me what&apos;s broken.
             </h2>
             <p className="text-[15px] text-[#888] leading-[1.75] mb-6">
-              Share your site, stack (WordPress, headless, custom), and whether you need audit-only, implementation, or
+              Share your site, stack (WordPress, Webflow, Shopify, Wix Studio, Framer, AI-focused CMS, headless, custom), and whether you need audit-only, implementation, or
               both. I&apos;ll reply within one business day.
             </p>
             <div className="flex items-center gap-2.5 text-sm text-[#888] mb-2.5">
@@ -659,7 +689,21 @@ const LandingPage = () => {
             <span className="text-[13px] font-medium">Chris Smith</span>
             <span className="text-xs text-[#444] hidden sm:inline">— Technical SEO &amp; Web Engineer</span>
           </div>
-          <div className="text-[13px] text-[#444]">© {new Date().getFullYear()} Chris Smith. Built in Australia. Remote worldwide.</div>
+          <div className="text-[13px] text-[#444] flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span>
+              Designed &amp; Engineered by Chris Smith with{' '}
+              <span
+                className="text-[#00FF7F] animate-pulse inline-block"
+                aria-hidden="true"
+              >
+                ♥
+              </span>
+            </span>
+            <span className="text-[#333]" aria-hidden="true">
+              |
+            </span>
+            <span>© {new Date().getFullYear()}</span>
+          </div>
         </div>
         <div className="flex flex-wrap gap-[22px] justify-center">
           {[

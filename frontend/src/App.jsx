@@ -12,18 +12,7 @@ import SEOAudit from './pages/SEOAudit';
 import Settings from './pages/Settings';
 import ErrorBoundary from './components/ErrorBoundary';
 import { authAPI } from './lib/api';
-import { identifyUser, resetUser, trackPageView } from './lib/mixpanel';
 import './App.css';
-
-const PageViewTracker = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    trackPageView(location.pathname);
-  }, [location.pathname]);
-
-  return null;
-};
 
 // Protected app shell - renders sidebar + topbar around child routes
 const AppShell = ({
@@ -71,7 +60,7 @@ const App = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Validate session with backend before trusting localStorage / Mixpanel identity
+  // Validate session with backend before trusting localStorage
   useEffect(() => {
     const token = localStorage.getItem('authToken');
     const savedUser = localStorage.getItem('currentUser');
@@ -85,10 +74,8 @@ const App = () => {
       .then((user) => {
         setCurrentUser(user);
         localStorage.setItem('currentUser', JSON.stringify(user));
-        identifyUser(user);
       })
       .catch(() => {
-        resetUser();
         localStorage.removeItem('currentUser');
         localStorage.removeItem('authToken');
         setCurrentUser(null);
@@ -120,7 +107,6 @@ const App = () => {
     setCurrentUser(user);
     localStorage.setItem('currentUser', JSON.stringify(user));
     localStorage.setItem('authToken', token);
-    identifyUser(user);
   }, []);
 
   const handleLogout = useCallback(async () => {
@@ -131,7 +117,6 @@ const App = () => {
         console.warn('Logout API call failed:', err);
       }
     }
-    resetUser();
     localStorage.removeItem('currentUser');
     localStorage.removeItem('authToken');
     setCurrentUser(null);
@@ -166,7 +151,6 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <PageViewTracker />
       <ErrorBoundary>
         <Routes>
           {/* Public routes */}

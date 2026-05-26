@@ -1,9 +1,11 @@
-import mixpanel from 'mixpanel-browser';
+/**
+ * Mixpanel removed.
+ *
+ * This module remains as a no-op shim to avoid touching app codepaths that
+ * previously imported analytics helpers.
+ */
 
-const TOKEN = process.env.REACT_APP_MIXPANEL_TOKEN;
-let initialized = false;
-
-/** Canonical event names — snake_case, object + action */
+/** Canonical event names — snake_case, object + action (kept for callsites). */
 export const MixpanelEvents = {
   PAGE_VIEW: 'page_view',
   SIGN_UP_COMPLETED: 'sign_up_completed',
@@ -21,50 +23,24 @@ export const MixpanelEvents = {
 };
 
 export function isMixpanelEnabled() {
-  return Boolean(TOKEN);
+  return false;
 }
 
 export function initMixpanel() {
-  if (!TOKEN || initialized) {
-    return;
-  }
-
-  mixpanel.init(TOKEN, {
-    debug: process.env.NODE_ENV !== 'production',
-    persistence: 'localStorage',
-    track_pageview: false,
-  });
-  mixpanel.register({ platform: 'web' });
-  initialized = true;
+  // no-op
 }
 
 export function track(event, properties = {}) {
-  if (!TOKEN || !initialized) {
-    return;
-  }
-  mixpanel.track(event, { platform: 'web', ...properties });
+  void event;
+  void properties;
 }
 
 export function identifyUser(user) {
-  if (!TOKEN || !initialized || !user?.id) {
-    return;
-  }
-
-  mixpanel.identify(user.id);
-
-  const profile = {};
-  if (user.name) profile.$name = user.name;
-  if (user.email) profile.$email = user.email;
-  if (Object.keys(profile).length > 0) {
-    mixpanel.people.set(profile);
-  }
+  void user;
 }
 
 export function resetUser() {
-  if (!TOKEN || !initialized) {
-    return;
-  }
-  mixpanel.reset();
+  // no-op
 }
 
 export function trackPageView(path) {

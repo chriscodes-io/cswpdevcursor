@@ -6,7 +6,6 @@ import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { projectsAPI, seoAuditAPI, downloadSeoReportJson } from '../lib/api';
 import { logError } from '../lib/logger';
-import { track, MixpanelEvents } from '../lib/mixpanel';
 import { RadialBarChart, RadialBar, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend } from 'recharts';
 
 const SEOAudit = () => {
@@ -57,17 +56,6 @@ const SEOAudit = () => {
     try {
       const result = await seoAuditAPI.runAudit(selectedProject, url, strategy);
       setAudit(result);
-
-      track(MixpanelEvents.SEO_AUDIT_COMPLETED, {
-        project_id: selectedProject,
-        url: result.url,
-        overall_score: result.overall_score,
-        performance_source: result.performance_source,
-        is_wordpress: result.is_wordpress,
-        duration_seconds: result.duration_seconds,
-        strategy,
-        $insert_id: `seo-audit-${result.id}`,
-      });
 
       // Load history after successful audit
       const history = await seoAuditAPI.getAudits(selectedProject);
