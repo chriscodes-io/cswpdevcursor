@@ -20,11 +20,13 @@ const scrollTo = (id) => (e) => {
 };
 
 const SectionLabel = ({ children }) => (
-  <p className="font-mono-brand text-[11px] font-medium tracking-[0.1em] uppercase text-[#00FF7F] mb-3 flex items-center gap-2">
+  <p className="font-mono-brand text-[11px] font-medium tracking-[0.1em] uppercase text-[#00FF7F] mb-5 flex items-center gap-2">
     <span className="w-5 h-px bg-[#00FF7F]" />
     {children}
   </p>
 );
+
+const sectionPad = 'px-[6%] py-[112px]';
 
 const BtnPrimary = ({ children, className = '', ...props }) => (
   <button
@@ -46,8 +48,10 @@ const BtnGhost = ({ children, className = '', ...props }) => (
   </button>
 );
 
-const OutcomeChip = ({ children }) => (
-  <span className="text-[11px] px-2.5 py-1 rounded-full border border-[#1e1e1e] text-[#888] font-mono-brand tracking-wide">
+const OutcomeChip = ({ children, className = '' }) => (
+  <span
+    className={`text-[11px] px-2.5 py-1 rounded-full border border-[#1e1e1e] text-[#777] font-mono-brand tracking-wide ${className}`}
+  >
     {children}
   </span>
 );
@@ -165,19 +169,22 @@ const LandingPage = () => {
       featured: true,
       client: 'B2B SaaS · ~80 employees',
       title: 'Indexation & Core Web Vitals recovery',
-      metrics: ['Lighthouse 58 → 96', '+240% organic · 6 months'],
+      primaryOutcome: 'Lighthouse 58 → 96',
+      secondaryOutcome: '+240% organic traffic · 6 months',
       engagement: 'Technical audit + implementation',
     },
     {
       client: 'eCommerce · Australia',
       title: 'Headless WordPress rebuild',
-      metrics: ['LCP −1.2s', 'Crawl errors −78%'],
+      primaryOutcome: 'LCP −1.2s',
+      secondaryOutcome: 'Crawl errors −78%',
       engagement: 'Build + ongoing SEO',
     },
     {
       client: 'Digital agency · 15 people',
       title: 'White-label SEO implementation',
-      metrics: ['40+ fixes shipped / quarter'],
+      primaryOutcome: '40+ fixes shipped',
+      secondaryOutcome: 'per quarter',
       engagement: 'Retained dev-SEO capacity',
     },
   ];
@@ -185,35 +192,40 @@ const LandingPage = () => {
   const testimonials = [
     {
       initials: 'JM',
+      headline: 'Results in Search Console, not slide decks',
       quote:
-        'Chris is the rare person who understands both the SEO strategy and how to actually implement it. No handoff friction — just results showing up in Search Console.',
+        'Understands both SEO strategy and implementation — no handoff friction, just results showing up in Search Console.',
       name: 'James Mitchell',
       role: 'Head of Digital',
       company: 'B2B SaaS · Sydney',
       engagement: 'Technical SEO retainer',
-      outcomes: ['Indexation recovery', 'Dev-ready fix specs'],
+      variant: 'default',
     },
     {
       initials: 'SR',
+      headline: 'Lighthouse 58 → 96 · +240% organic',
       quote:
-        'Lighthouse scores went from 58 to 96 across the board. Organic traffic up 240% in six months — and he did all the implementation himself.',
+        'Scores across the board in six months — and he did all the implementation himself.',
       name: 'Sarah Reynolds',
       role: 'Marketing Director',
       company: 'eCommerce · Australia',
       engagement: 'Audit + implementation',
-      outcomes: ['Lighthouse 58 → 96', '+240% organic traffic'],
+      variant: 'accent',
     },
     {
       initials: 'DK',
+      headline: 'Fixes shipped, not PDFs filed',
       quote:
-        'Most SEO consultants hand you a 60-page PDF and disappear. Chris ships the fixes, shows you the impact, and doesn\'t charge extra every time you ask a question.',
+        'Ships the fixes, shows the impact, and doesn\'t charge extra every time you ask a question.',
       name: 'David Kim',
       role: 'CTO',
       company: 'Digital agency',
       engagement: 'White-label implementation',
-      outcomes: ['No audit-only handoffs', 'Search Console verified'],
+      variant: 'minimal',
     },
   ];
+
+  const trustPlatforms = ['WordPress', 'Shopify', 'Webflow', 'Next.js', 'Wix Studio', 'Framer'];
 
   const gridServices = [
     {
@@ -314,60 +326,88 @@ const LandingPage = () => {
       </nav>
 
       {/* Hero */}
-      <section id="top" className="px-[6%] pt-[90px] pb-[90px] min-h-[calc(100vh-62px)]">
-        <div>
-          <h1 className="text-[clamp(42px,6vw,68px)] font-semibold leading-[1.06] tracking-[-0.03em] mb-[22px]">
+      <section id="top" className={`${sectionPad} pt-[100px] pb-[120px] min-h-[calc(100vh-62px)]`}>
+        <div className="max-w-[720px]">
+          <h1 className="text-[clamp(42px,6vw,68px)] font-semibold leading-[1.06] tracking-[-0.03em] mb-7">
             Technical SEO strategy &amp; implementation for <RotatingAudience words={HERO_AUDIENCES} />
-            <span className="block mt-3 text-[clamp(17px,2.2vw,22px)] font-medium text-[#f0f0f0] leading-snug tracking-[-0.02em]">
-              fixes shipped, not just documented.
-            </span>
           </h1>
-          <p className="text-[15px] text-[#888] leading-[1.75] max-w-[520px] mb-9">
+          <p className="text-[clamp(18px,2.4vw,24px)] font-semibold text-[#f0f0f0] leading-snug tracking-[-0.02em] mb-6 max-w-[560px]">
+            Fixes shipped, not just documented.
+          </p>
+          <p className="text-[15px] text-[#666] leading-[1.8] max-w-[520px] mb-12">
             I help growth teams fix technical SEO faster by owning both the audit and the implementation. No handoffs
             between consultants and devs, no recommendations stuck in a backlog.
           </p>
-          <div className="flex flex-wrap items-center gap-3 mb-4">
+          <div className="flex flex-wrap items-center gap-4 mb-3">
             <BtnPrimary onClick={scrollTo('contact')} data-testid="hero-cta-contact">
               Start a project
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={2.5} />
             </BtnPrimary>
+            <BtnGhost onClick={scrollTo('audit')} data-testid="hero-cta-audit">
+              FREE Instant Audit
+            </BtnGhost>
+          </div>
+          <p className="text-[13px] text-[#555] leading-relaxed mb-10">
+            Or run a free{' '}
             <button
               type="button"
               onClick={scrollTo('audit')}
-              data-testid="hero-cta-audit"
-              className="inline-flex items-center justify-center gap-2 px-[22px] py-3 rounded-lg text-sm font-semibold border-2 border-[#00FF7F] bg-[#00FF7F]/15 text-[#f0f0f0] hover:bg-[#00FF7F]/25 hover:border-[#00FF7F] hover:-translate-y-px transition-all shadow-[0_0_32px_rgba(0,255,127,0.28)]"
+              className="text-[#888] hover:text-[#00FF7F] bg-transparent border-none cursor-pointer p-0 underline underline-offset-2 decoration-[#333] hover:decoration-[#00FF7F]/40 transition-colors"
             >
-              FREE Instant Audit
-            </button>
-          </div>
-          <button
-            type="button"
-            onClick={scrollTo('audit')}
-            className="text-[13px] text-[#666] hover:text-[#00FF7F] bg-transparent border-none cursor-pointer p-0 transition-colors"
+              WordPress health audit
+            </button>{' '}
+            — results in under 60 seconds.
+          </p>
+          <div
+            className="pt-8 border-t border-[#1e1e1e]"
+            aria-label="Trust indicators"
           >
-            Or run a free WordPress audit →
-          </button>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 mb-6">
+              {stats.map(({ num, label }) => (
+                <div key={label}>
+                  <div className="font-mono-brand text-[22px] sm:text-[26px] font-semibold text-[#00FF7F] leading-none tabular-nums">
+                    {num}
+                  </div>
+                  <div className="text-[11px] text-[#666] mt-1.5 leading-snug">{label}</div>
+                </div>
+              ))}
+            </div>
+            <p className="font-mono-brand text-[10px] uppercase tracking-[0.08em] text-[#444] mb-2.5">
+              Platforms &amp; stacks
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {trustPlatforms.map((platform) => (
+                <span
+                  key={platform}
+                  className="text-[11px] px-2.5 py-1 rounded-md border border-[#1a1a1a] text-[#666] bg-[#0a0a0a]"
+                >
+                  {platform}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Client work */}
-      <section id="work" className="px-[6%] py-[90px] bg-black border-t border-[#1e1e1e]">
+      <section id="work" className={`${sectionPad} bg-black border-t border-[#1e1e1e]`}>
         <SectionLabel>Selected work</SectionLabel>
-        <h2 className="text-[clamp(28px,3.5vw,40px)] font-semibold leading-[1.1] tracking-[-0.02em] mb-10">
+        <h2 className="text-[clamp(30px,3.8vw,44px)] font-semibold leading-[1.08] tracking-[-0.025em] mb-12">
           Results from shipped work, not slide decks.
         </h2>
-        <div className="grid lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 bg-[#0f0f0f] border border-[#1e1e1e] rounded-xl p-8 hover:border-[#00FF7F]/22 transition-colors flex flex-col justify-between min-h-[220px]">
+        <div className="grid lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-[#0f0f0f] border border-[#1e1e1e] rounded-xl p-10 lg:p-12 hover:border-[#00FF7F]/22 transition-colors flex flex-col justify-between min-h-[300px]">
             <div>
-              <p className="font-mono-brand text-[11px] text-[#888] uppercase tracking-wide mb-3">{featuredCase.client}</p>
-              <h3 className="text-xl font-semibold mb-4 leading-snug">{featuredCase.title}</h3>
-              <div className="flex flex-wrap gap-2 mb-6">
-                {featuredCase.metrics.map((m) => (
-                  <OutcomeChip key={m}>{m}</OutcomeChip>
-                ))}
-              </div>
+              <p className="font-mono-brand text-[clamp(32px,5vw,48px)] font-semibold text-[#00FF7F] leading-none tracking-tight mb-2">
+                {featuredCase.primaryOutcome}
+              </p>
+              <p className="text-lg text-[#f0f0f0] font-medium mb-8">{featuredCase.secondaryOutcome}</p>
+              <h3 className="text-xl font-semibold mb-3 leading-snug max-w-md">{featuredCase.title}</h3>
+              <p className="font-mono-brand text-[10px] text-[#444] uppercase tracking-[0.06em]">
+                {featuredCase.client}
+              </p>
             </div>
-            <div className="flex items-end justify-between gap-4 flex-wrap">
+            <div className="flex items-end justify-between gap-4 flex-wrap pt-8 mt-8 border-t border-[#1a1a1a]">
               <p className="text-xs text-[#555]">{featuredCase.engagement}</p>
               <button
                 type="button"
@@ -379,22 +419,21 @@ const LandingPage = () => {
               </button>
             </div>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
             {otherCases.map((c) => (
               <div
                 key={c.title}
-                className="bg-[#0f0f0f] border border-[#1e1e1e] rounded-xl p-6 hover:border-[#00FF7F]/22 transition-colors flex-1 flex flex-col justify-between"
+                className="bg-[#0f0f0f] border border-[#1e1e1e] rounded-xl p-7 hover:border-[#00FF7F]/22 transition-colors flex-1 flex flex-col justify-between min-h-[140px]"
               >
                 <div>
-                  <p className="font-mono-brand text-[10px] text-[#888] uppercase tracking-wide mb-2">{c.client}</p>
-                  <h3 className="text-[15px] font-semibold mb-3 leading-snug">{c.title}</h3>
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {c.metrics.map((m) => (
-                      <OutcomeChip key={m}>{m}</OutcomeChip>
-                    ))}
-                  </div>
+                  <p className="font-mono-brand text-[22px] font-semibold text-[#00FF7F] leading-none mb-1">
+                    {c.primaryOutcome}
+                  </p>
+                  <p className="text-sm text-[#aaa] mb-4">{c.secondaryOutcome}</p>
+                  <h3 className="text-[15px] font-semibold mb-2 leading-snug">{c.title}</h3>
+                  <p className="font-mono-brand text-[10px] text-[#444] uppercase tracking-[0.06em]">{c.client}</p>
                 </div>
-                <p className="text-[11px] text-[#555]">{c.engagement}</p>
+                <p className="text-[11px] text-[#555] mt-4 pt-4 border-t border-[#1a1a1a]">{c.engagement}</p>
               </div>
             ))}
           </div>
@@ -402,11 +441,11 @@ const LandingPage = () => {
       </section>
 
       {/* Services */}
-      <section id="services" className="px-[6%] py-[90px] border-y border-[#1e1e1e]">
-        <div className="grid lg:grid-cols-2 gap-[60px] items-end mb-12">
+      <section id="services" className={`${sectionPad} border-y border-[#1e1e1e]`}>
+        <div className="grid lg:grid-cols-2 gap-[60px] items-end mb-14">
           <div>
             <SectionLabel>What I do</SectionLabel>
-            <h2 className="text-[clamp(28px,3.5vw,40px)] font-semibold leading-[1.1] tracking-[-0.02em]">
+            <h2 className="text-[clamp(30px,3.8vw,44px)] font-semibold leading-[1.08] tracking-[-0.025em]">
               Development-led
               <br />
               technical SEO.
@@ -440,9 +479,9 @@ const LandingPage = () => {
       </section>
 
       {/* Process */}
-      <section id="process" className="px-[6%] py-[72px] border-b border-[#1e1e1e]">
+      <section id="process" className={`${sectionPad} py-[96px] border-b border-[#1e1e1e]`}>
         <SectionLabel>Process</SectionLabel>
-        <h2 className="text-[clamp(28px,3.5vw,40px)] font-semibold leading-[1.1] tracking-[-0.02em] mb-12">
+        <h2 className="text-[clamp(30px,3.8vw,44px)] font-semibold leading-[1.08] tracking-[-0.025em] mb-14">
           From audit to shipped fixes in three steps.
         </h2>
         <div className="grid md:grid-cols-3 gap-10 md:gap-8">
@@ -457,31 +496,41 @@ const LandingPage = () => {
       </section>
 
       {/* Testimonials */}
-      <section id="proof" className="px-[6%] py-[90px] bg-black">
+      <section id="proof" className={`${sectionPad} bg-black`}>
         <SectionLabel>Client results</SectionLabel>
-        <h2 className="text-[clamp(28px,3.5vw,40px)] font-semibold leading-[1.1] tracking-[-0.02em] mb-10">
+        <h2 className="text-[clamp(30px,3.8vw,44px)] font-semibold leading-[1.08] tracking-[-0.025em] mb-12">
           What clients say after implementation shipped.
         </h2>
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-3 gap-6">
           {testimonials.map((t) => (
-            <div key={t.name} className="bg-[#0f0f0f] border border-[#1e1e1e] rounded-xl p-[26px] hover:border-[#00FF7F]/22 transition-colors flex flex-col">
-              <div className="text-[#00FF7F] text-sm tracking-[2px] mb-3.5">★★★★★</div>
-              <p className="text-sm text-[#888] leading-[1.7] mb-4">&ldquo;{t.quote}&rdquo;</p>
-              <div className="flex flex-wrap gap-1.5 mb-5">
-                {t.outcomes.map((o) => (
-                  <OutcomeChip key={o}>{o}</OutcomeChip>
-                ))}
-              </div>
-              <div className="mt-auto flex items-center gap-2.5 pt-4 border-t border-[#1e1e1e]">
-                <div className="w-[38px] h-[38px] rounded-full bg-[#00FF7F]/[0.08] border border-[#00FF7F]/22 flex items-center justify-center text-xs font-semibold text-[#00FF7F]">
+            <div
+              key={t.name}
+              className={`rounded-xl flex flex-col transition-colors ${
+                t.variant === 'accent'
+                  ? 'bg-[#0c120f] border border-[#00FF7F]/20 p-8 hover:border-[#00FF7F]/35'
+                  : t.variant === 'minimal'
+                    ? 'bg-transparent border border-[#1a1a1a] p-7 hover:border-[#333]'
+                    : 'bg-[#0f0f0f] border border-[#1e1e1e] p-8 hover:border-[#00FF7F]/22'
+              }`}
+            >
+              <p className="font-mono-brand text-[15px] sm:text-base font-semibold text-[#00FF7F] leading-snug mb-4">
+                {t.headline}
+              </p>
+              <p className="text-[13px] text-[#666] leading-[1.65] mb-6 flex-1">&ldquo;{t.quote}&rdquo;</p>
+              <div className="mt-auto flex items-center gap-2.5 pt-5 border-t border-[#1e1e1e]">
+                <div
+                  className={`rounded-full flex items-center justify-center text-xs font-semibold text-[#00FF7F] shrink-0 ${
+                    t.variant === 'accent' ? 'w-10 h-10 bg-[#00FF7F]/15' : 'w-[38px] h-[38px] bg-[#00FF7F]/[0.08] border border-[#00FF7F]/22'
+                  }`}
+                >
                   {t.initials}
                 </div>
                 <div>
                   <div className="text-[13px] font-medium">{t.name}</div>
-                  <div className="text-xs text-[#888]">
+                  <div className="text-xs text-[#777]">
                     {t.role} · {t.company}
                   </div>
-                  <div className="text-[11px] text-[#555] mt-0.5">{t.engagement}</div>
+                  <div className="text-[10px] text-[#444] mt-0.5">{t.engagement}</div>
                 </div>
               </div>
             </div>
@@ -492,7 +541,7 @@ const LandingPage = () => {
       {/* Audit CTA — demoted */}
       <section
         id="audit"
-        className="px-[6%] py-[72px] border-t border-[#1e1e1e]"
+        className={`${sectionPad} py-[96px] border-t border-[#1e1e1e]`}
         style={{
           background: 'radial-gradient(ellipse 60% 50% at 50% 100%, rgba(0,255,127,.03) 0%, transparent 100%)',
         }}
@@ -530,10 +579,10 @@ const LandingPage = () => {
       </section>
 
       {/* About */}
-      <section id="about" className="px-[6%] py-[90px] grid lg:grid-cols-[1.1fr_1fr] gap-20 items-center border-t border-[#1e1e1e]">
+      <section id="about" className={`${sectionPad} grid lg:grid-cols-[1.1fr_1fr] gap-20 items-center border-t border-[#1e1e1e]`}>
         <div>
           <SectionLabel>About</SectionLabel>
-          <h2 className="text-[clamp(28px,3.5vw,40px)] font-semibold leading-[1.1] tracking-[-0.02em] mb-5">Hi, I&apos;m Chris.</h2>
+          <h2 className="text-[clamp(30px,3.8vw,44px)] font-semibold leading-[1.08] tracking-[-0.025em] mb-6">Hi, I&apos;m Chris.</h2>
           <p className="text-[15px] text-[#888] leading-[1.8] mb-4">
             I&apos;m a technical SEO and web engineer in Australia, working with teams worldwide. For eight years
             I&apos;ve run audits as a consultant and shipped the fixes as a developer.
@@ -550,9 +599,9 @@ const LandingPage = () => {
             <BtnPrimary onClick={scrollTo('contact')}>Work with me →</BtnPrimary>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-4">
           {stats.map(({ num, label }) => (
-            <div key={label} className="bg-[#0f0f0f] border border-[#1e1e1e] rounded-xl p-[22px] hover:border-[#00FF7F]/22 transition-colors">
+            <div key={label} className="bg-[#0f0f0f] border border-[#1e1e1e] rounded-xl p-6 hover:border-[#00FF7F]/22 transition-colors">
               <div className="font-mono-brand text-[26px] font-semibold text-[#00FF7F] mb-1 tabular-nums">{num}</div>
               <div className="text-xs text-[#888]">{label}</div>
             </div>
@@ -561,11 +610,11 @@ const LandingPage = () => {
       </section>
 
       {/* Contact */}
-      <section id="contact" className="px-[6%] py-[90px] bg-black border-t border-[#1e1e1e]">
-        <div className="grid lg:grid-cols-[1fr_1.2fr] gap-16 items-start max-w-6xl mx-auto">
+      <section id="contact" className={`${sectionPad} bg-black border-t border-[#1e1e1e]`}>
+        <div className="grid lg:grid-cols-[1fr_1.2fr] gap-20 items-start max-w-6xl mx-auto">
           <div>
             <SectionLabel>Get in touch</SectionLabel>
-            <h2 className="text-[clamp(28px,3.5vw,40px)] font-semibold leading-[1.1] tracking-[-0.02em] mb-4">
+            <h2 className="text-[clamp(30px,3.8vw,44px)] font-semibold leading-[1.08] tracking-[-0.025em] mb-5">
               Tell me what&apos;s broken.
             </h2>
             <p className="text-[15px] text-[#888] leading-[1.75] mb-6">
@@ -585,10 +634,17 @@ const LandingPage = () => {
               </span>
             </div>
           </div>
-          <form onSubmit={handleSubmit} data-testid="contact-form">
-            <div className="grid sm:grid-cols-2 gap-3 mb-3.5">
+          <form
+            onSubmit={handleSubmit}
+            data-testid="contact-form"
+            className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl p-6 sm:p-8"
+          >
+            <p className="text-[11px] font-mono-brand uppercase tracking-[0.07em] text-[#555] mb-5">
+              Project enquiry
+            </p>
+            <div className="grid lg:grid-cols-2 gap-4 mb-4">
               <div>
-                <label htmlFor="contact-name" className="font-mono-brand text-[11px] uppercase tracking-[0.07em] text-[#888] block mb-1.5">
+                <label htmlFor="contact-name" className="font-mono-brand text-[11px] uppercase tracking-[0.07em] text-[#666] block mb-2">
                   Name *
                 </label>
                 <input
@@ -601,7 +657,7 @@ const LandingPage = () => {
                 />
               </div>
               <div>
-                <label htmlFor="contact-email" className="font-mono-brand text-[11px] uppercase tracking-[0.07em] text-[#888] block mb-1.5">
+                <label htmlFor="contact-email" className="font-mono-brand text-[11px] uppercase tracking-[0.07em] text-[#666] block mb-2">
                   Email *
                 </label>
                 <input
@@ -615,8 +671,8 @@ const LandingPage = () => {
                 />
               </div>
             </div>
-            <div className="mb-3.5">
-              <label htmlFor="contact-website" className="font-mono-brand text-[11px] uppercase tracking-[0.07em] text-[#888] block mb-1.5">
+            <div className="mb-4">
+              <label htmlFor="contact-website" className="font-mono-brand text-[11px] uppercase tracking-[0.07em] text-[#666] block mb-2">
                 Website URL
               </label>
               <input
@@ -630,8 +686,8 @@ const LandingPage = () => {
                 data-testid="contact-website-input"
               />
             </div>
-            <div className="mb-3.5">
-              <label htmlFor="contact-message" className="font-mono-brand text-[11px] uppercase tracking-[0.07em] text-[#888] block mb-1.5">
+            <div className="mb-5">
+              <label htmlFor="contact-message" className="font-mono-brand text-[11px] uppercase tracking-[0.07em] text-[#666] block mb-2">
                 Message *
               </label>
               <textarea
@@ -641,18 +697,18 @@ const LandingPage = () => {
                 value={form.message}
                 onChange={handleChange}
                 placeholder="Site URL, stack, and what you're trying to fix..."
-                className="w-full min-h-[120px] bg-[#0f0f0f] border border-[#1e1e1e] rounded-lg px-4 py-3 text-sm outline-none focus:border-[#00FF7F]/22 resize-y placeholder:text-[#444]"
+                className="w-full min-h-[140px] bg-[#0f0f0f] border border-[#1e1e1e] rounded-lg px-4 py-3 text-sm outline-none focus:border-[#00FF7F]/22 resize-y placeholder:text-[#444]"
                 data-testid="contact-message-input"
               />
             </div>
             {status.state === 'error' && (
-              <div className="flex items-start gap-2 text-red-400 text-sm border border-red-500/30 bg-red-500/5 px-4 py-3 mb-3" data-testid="contact-error">
+              <div className="flex items-start gap-2 text-red-400 text-sm border border-red-500/30 bg-red-500/5 px-4 py-3 mb-4 rounded-lg" data-testid="contact-error">
                 <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>{status.error}</span>
               </div>
             )}
             {status.state === 'sent' && (
-              <div className="flex items-start gap-2 text-[#00FF7F] text-sm border border-[#00FF7F]/30 bg-[#00FF7F]/5 px-4 py-3 mb-3" data-testid="contact-success">
+              <div className="flex items-start gap-2 text-[#00FF7F] text-sm border border-[#00FF7F]/30 bg-[#00FF7F]/5 px-4 py-3 mb-4 rounded-lg" data-testid="contact-success">
                 <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
                 <span>Thanks — your message is in. I&apos;ll be in touch within 1 business day.</span>
               </div>
@@ -660,6 +716,9 @@ const LandingPage = () => {
             <BtnPrimary type="submit" disabled={status.state === 'sending'} className="w-full py-3.5" data-testid="contact-submit">
               {status.state === 'sending' ? 'Sending…' : 'Send project enquiry →'}
             </BtnPrimary>
+            <p className="text-[12px] text-[#555] text-center mt-4 leading-relaxed">
+              I reply within one business day. Your details stay private — no mailing lists.
+            </p>
           </form>
         </div>
       </section>
