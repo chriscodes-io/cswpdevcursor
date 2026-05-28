@@ -21,6 +21,9 @@ async def ensure_indexes():
 	await db.user_sessions.create_index("session_token")
 	await db.user_sessions.create_index("user_id")
 
+	for coll in ("users", "clients", "projects", "tasks", "seo_audits"):
+		await db[coll].create_index("id", unique=True)
+
 	await db.clients.create_index("email")
 	await db.projects.create_index("client_id")
 	await db.projects.create_index("status")
@@ -28,6 +31,7 @@ async def ensure_indexes():
 	await db.tasks.create_index("status")
 
 	await db.seo_audits.create_index([("project_id", 1), ("audit_date", -1)])
+	await db.seo_audits.create_index("audit_date")
 	await db.payment_transactions.create_index([("project_id", 1), ("created_at", -1)])
 	await db.payment_transactions.create_index("session_id")
 	await db.contact_messages.create_index([("created_at", -1)])
