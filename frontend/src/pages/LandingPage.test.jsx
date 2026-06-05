@@ -1,6 +1,7 @@
 import React from 'react';
+import { act } from 'react';
 import { createRoot } from 'react-dom/client';
-import { act, Simulate } from 'react-dom/test-utils';
+import { Simulate } from 'react-dom/test-utils';
 import { MemoryRouter } from 'react-router-dom';
 import LandingPage from './LandingPage';
 
@@ -19,7 +20,7 @@ describe('LandingPage audit modal', () => {
 
     await act(async () => {
       root.render(
-        <MemoryRouter>
+        <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <LandingPage />
         </MemoryRouter>
       );
