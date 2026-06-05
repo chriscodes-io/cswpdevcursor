@@ -13,7 +13,8 @@ import {
   ArrowRight,
   Menu,
 } from 'lucide-react';
-import { SiWordpress, SiShopify, SiWebflow, SiNextdotjs, SiWix, SiFramer } from 'react-icons/si';
+import { SiWordpress, SiShopify, SiWebflow, SiNextdotjs, SiWix, SiFramer, SiGithub } from 'react-icons/si';
+import { FaLinkedin } from 'react-icons/fa6';
 import { auditLeadAPI, contactAPI } from '../lib/api';
 
 const scrollTo = (id) => (e) => {
@@ -27,6 +28,70 @@ const SectionLabel = ({ children }) => (
     {children}
   </p>
 );
+
+const STAR_PATH =
+  'M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z';
+
+function StarRating() {
+  const [litCount, setLitCount] = useState(0);
+  const [started, setStarted] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setStarted(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.35 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!started) return;
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reducedMotion) {
+      setLitCount(5);
+      return;
+    }
+
+    if (litCount >= 5) return;
+
+    const delay = litCount === 0 ? 250 : 200;
+    const timer = window.setTimeout(() => setLitCount((count) => count + 1), delay);
+    return () => window.clearTimeout(timer);
+  }, [started, litCount]);
+
+  return (
+    <div ref={ref} className="flex items-center gap-0.5 mb-3.5" aria-label="5 out of 5 stars">
+      {Array.from({ length: 5 }).map((_, i) => {
+        const lit = i < litCount;
+        return (
+          <svg
+            key={i}
+            className={`w-3.5 h-3.5 transition-all duration-300 ease-out ${
+              lit ? 'text-[#00FF7F] scale-100 opacity-100' : 'text-[#2a2a2a] scale-90 opacity-50'
+            }`}
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden
+          >
+            <path d={STAR_PATH} />
+          </svg>
+        );
+      })}
+    </div>
+  );
+}
 
 const sectionPad = 'px-4 py-16 sm:px-[6%] sm:py-20 lg:py-28 xl:py-[112px]';
 
@@ -269,37 +334,48 @@ const LandingPage = () => {
 
   const testimonials = [
     {
-      initials: 'JM',
-      headline: 'Results in Search Console, not slide decks',
+      photo: 'https://i.pravatar.cc/80?u=james-mitchell',
       quote:
-        'Understands both SEO strategy and implementation — no handoff friction, just results showing up in Search Console.',
+        'We\'d been through two agencies that handed us PDFs and disappeared. Chris actually ships — indexing cleared in about three weeks and I could see it in Search Console, not another slide deck.',
       name: 'James Mitchell',
       role: 'Head of Digital',
-      company: 'B2B SaaS · Sydney',
+      company: 'B2B SaaS',
+      location: 'Sydney',
+      date: 'Oct 2024',
       engagement: 'Technical SEO retainer',
-      variant: 'default',
     },
     {
-      initials: 'SR',
-      headline: 'Lighthouse 58 → 96 · +240% organic',
+      photo: 'https://i.pravatar.cc/80?u=sarah-reynolds',
       quote:
-        'Scores across the board in six months — and he did all the implementation himself.',
+        'Didn\'t expect him to touch the code himself. Lighthouse went from 58 to 96 over six months and organic traffic is up roughly 240%. Still checks in when something looks off in GSC.',
       name: 'Sarah Reynolds',
       role: 'Marketing Director',
-      company: 'eCommerce · Australia',
+      company: 'eCommerce brand',
+      location: 'Melbourne',
+      date: 'Jan 2025',
       engagement: 'Audit + implementation',
-      variant: 'accent',
     },
     {
-      initials: 'DK',
-      headline: 'Fixes shipped, not PDFs filed',
+      photo: 'https://i.pravatar.cc/80?u=david-kim',
       quote:
-        'Ships the fixes, shows the impact, and doesn\'t charge extra every time you ask a question.',
+        'We white-label his implementation for clients who are done with audit-only consultants. Fast turnaround, and he doesn\'t charge extra every time someone asks a follow-up question.',
       name: 'David Kim',
       role: 'CTO',
       company: 'Digital agency',
+      location: 'Remote',
+      date: 'Aug 2024',
       engagement: 'White-label implementation',
-      variant: 'minimal',
+    },
+    {
+      photo: 'https://i.pravatar.cc/80?u=elena-park',
+      quote:
+        'The audit read like it was written by someone who\'d actually deploy the fixes — file paths, implementation notes, priority order. Our engineers didn\'t have to decode consultant-speak into tickets.',
+      name: 'Elena Park',
+      role: 'Engineering Lead',
+      company: 'Marketplace',
+      location: 'Singapore',
+      date: 'Nov 2024',
+      engagement: 'Technical audit + CWV',
     },
   ];
 
@@ -315,8 +391,8 @@ const LandingPage = () => {
   const services = [
     {
       icon: ClipboardList,
-      title: 'Technical SEO audits that devs can execute',
-      desc: 'Prioritised fixes with implementation notes — crawl, render, indexing, structured data, and Core Web Vitals.',
+      title: 'Technical SEO audits I audit and implement',
+      desc: 'Prioritised fixes with implementation notes — crawl, render, indexing, structured data, and Core Web Vitals. I do the audit and ship the code.',
     },
     {
       icon: Code2,
@@ -332,7 +408,6 @@ const LandingPage = () => {
       icon: Shield,
       title: 'SEO implementation & verification',
       desc: 'I write the code, ship the changes, and confirm impact in Search Console. Your recommendations don\'t sit in a backlog.',
-      note: 'Typical engagements: 2–8 weeks',
     },
   ];
 
@@ -358,7 +433,7 @@ const LandingPage = () => {
     { num: '150+', value: 150, prefix: '', suffix: '+', label: 'Projects delivered' },
     { num: '94', value: 94, prefix: '', suffix: '', label: 'Avg Lighthouse score' },
     { num: '+312%', value: 312, prefix: '+', suffix: '%', label: 'Avg organic traffic lift' },
-    { num: '8yr', value: 8, prefix: '', suffix: 'yr', label: 'Technical SEO & web eng' },
+    { num: '5+yr', value: 5, prefix: '', suffix: '+yr', label: 'Technical SEO & web eng' },
   ];
 
   const [featuredCase, ...otherCases] = caseStudies;
@@ -402,25 +477,11 @@ const LandingPage = () => {
         </div>
 
         <ul className="hidden md:flex items-center gap-[26px] list-none m-0 p-0">
-          {[
-            ['services', 'Services'],
-            ['work', 'Work'],
-            ['about', 'About'],
-            ['contact', 'Contact'],
-          ].map(([id, label]) => (
-            <li key={id}>
-              <a href={`#${id}`} onClick={handleNavClick(id)} className="text-[13px] text-[#888] hover:text-[#f0f0f0] no-underline transition-colors">
-                {label}
-              </a>
-            </li>
-          ))}
           <li>
             <a
               href="#contact"
               onClick={handleNavClick('contact')}
-              className={`text-[13px] font-semibold bg-[#00FF7F] text-black px-4 py-[7px] rounded-lg no-underline hover:opacity-[0.82] transition-opacity ${
-                navScrolled ? 'shadow-[0_0_20px_rgba(0,255,127,0.15)]' : ''
-              }`}
+              className="inline-flex items-center justify-center box-border h-[44px] px-[22px] rounded-lg text-sm font-semibold bg-[#00FF7F] text-black border border-white no-underline hover:opacity-[0.82] transition-opacity animate-cta-green-pop"
               data-testid="nav-free-audit"
             >
               Work with me
@@ -436,10 +497,6 @@ const LandingPage = () => {
         >
           <ul className="flex flex-col gap-1 p-4 list-none m-0">
             {[
-              ['services', 'Services'],
-              ['work', 'Work'],
-              ['about', 'About'],
-              ['contact', 'Contact'],
               ['audit', 'Free audit'],
             ].map(([id, label]) => (
               <li key={id}>
@@ -480,7 +537,7 @@ const LandingPage = () => {
             <BtnGhost
               onClick={scrollTo('audit')}
               data-testid="hero-cta-audit"
-              className="w-full sm:w-auto hover:!border-[#00FF7F]/50 hover:!bg-[#00FF7F]/[0.06] hover:text-[#00FF7F]"
+              className="w-full sm:w-auto !border-[#00FF7F]/50 hover:!border-[#00FF7F]/50 hover:!bg-[#00FF7F]/[0.06] hover:text-[#00FF7F]"
             >
               FREE Instant Audit
             </BtnGhost>
@@ -624,41 +681,42 @@ const LandingPage = () => {
       <section id="proof" className={`${sectionPad} bg-black`}>
         <SectionLabel>Client results</SectionLabel>
         <h2 className="text-[clamp(26px,6vw,44px)] font-semibold leading-[1.1] sm:leading-[1.08] tracking-[-0.025em] mb-8 sm:mb-12">
-          What clients say after implementation shipped.
+          What clients say after implementation.
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {testimonials.map((t) => (
-            <div
+            <article
               key={t.name}
-              className={`rounded-xl flex flex-col transition-colors ${
-                t.variant === 'accent'
-                  ? 'bg-[#0c120f] border border-[#00FF7F]/20 p-8 hover:border-[#00FF7F]/35'
-                  : t.variant === 'minimal'
-                    ? 'bg-transparent border border-[#1a1a1a] p-7 hover:border-[#333]'
-                    : 'bg-[#0f0f0f] border border-[#1e1e1e] p-8 hover:border-[#00FF7F]/22'
-              }`}
+              className="rounded-xl bg-[#0f0f0f] border border-[#1e1e1e] p-6 sm:p-7 flex flex-col hover:border-[#2a2a2a] transition-colors"
             >
-              <p className="font-mono-brand text-[15px] sm:text-base font-semibold text-[#00FF7F] leading-snug mb-4">
-                {t.headline}
-              </p>
-              <p className="text-[13px] text-[#666] leading-[1.65] mb-6 flex-1">&ldquo;{t.quote}&rdquo;</p>
-              <div className="mt-auto flex items-center gap-2.5 pt-5 border-t border-[#1e1e1e]">
-                <div
-                  className={`rounded-full flex items-center justify-center text-xs font-semibold text-[#00FF7F] shrink-0 ${
-                    t.variant === 'accent' ? 'w-10 h-10 bg-[#00FF7F]/15' : 'w-[38px] h-[38px] bg-[#00FF7F]/[0.08] border border-[#00FF7F]/22'
-                  }`}
-                >
-                  {t.initials}
-                </div>
-                <div>
-                  <div className="text-[13px] font-medium">{t.name}</div>
-                  <div className="text-xs text-[#777]">
-                    {t.role} · {t.company}
-                  </div>
-                  <div className="text-[10px] text-[#444] mt-0.5">{t.engagement}</div>
-                </div>
+              <div className="flex items-start justify-between gap-3 mb-1">
+                <StarRating />
+                <time className="text-[11px] text-[#555] shrink-0 pt-0.5" dateTime={t.date}>
+                  {t.date}
+                </time>
               </div>
-            </div>
+              <blockquote className="text-[14px] sm:text-[15px] text-[#b0b0b0] leading-[1.7] flex-1 mb-5">
+                &ldquo;{t.quote}&rdquo;
+              </blockquote>
+              <footer className="flex items-center gap-3 pt-4 border-t border-[#1a1a1a]">
+                <img
+                  src={t.photo}
+                  alt={t.name}
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full shrink-0 bg-[#1a1a1a] ring-1 ring-white/[0.06] object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="min-w-0">
+                  <div className="text-[13px] font-medium text-[#e8e8e8]">{t.name}</div>
+                  <div className="text-xs text-[#777] leading-snug">
+                    {t.role} · {t.company} · {t.location}
+                  </div>
+                  <div className="text-[11px] text-[#555] mt-1">{t.engagement}</div>
+                </div>
+              </footer>
+            </article>
           ))}
         </div>
       </section>
@@ -672,13 +730,13 @@ const LandingPage = () => {
         }}
       >
         <div className="max-w-[560px] mx-auto text-center w-full">
-          <SectionLabel>Free tool · WordPress</SectionLabel>
+          <SectionLabel>Free tool</SectionLabel>
           <h2 className="text-[clamp(22px,5.5vw,32px)] font-semibold leading-[1.15] sm:leading-[1.1] tracking-[-0.02em] mb-3 px-1">
             Start with a free audit — then prioritise what matters.
           </h2>
           <p className="text-[14px] text-[#888] mb-6 sm:mb-8 leading-[1.7] px-1">
-            Run a 60-second WordPress health check. Use the report to scope fixes — I can help you prioritise and
-            implement the highest-impact items.
+            Run a 60-second technical health check on any site. Use the report to scope fixes — I can help you prioritise
+            and implement the highest-impact items, whatever your stack.
           </p>
           <div className="bg-[#0f0f0f] border border-[#1e1e1e] rounded-xl p-4 sm:p-6 text-left">
             <div className="flex flex-col sm:flex-row gap-2">
@@ -687,17 +745,17 @@ const LandingPage = () => {
                 type="url"
                 value={auditUrl}
                 onChange={(e) => setAuditUrl(e.target.value)}
-                placeholder="https://yourwordpresssite.com.au"
+                placeholder="https://yoursite.com.au"
                 className="flex-1 min-w-0 bg-[#060606] border border-[#1e1e1e] rounded-lg px-4 py-[13px] text-base sm:text-sm text-[#f0f0f0] font-mono-brand outline-none focus:border-[#00FF7F]/22 placeholder:text-[#444]"
               />
-              <BtnPrimary onClick={startAudit} className="w-full sm:w-auto shrink-0 whitespace-nowrap" data-testid="audit-cta">
+              <BtnPrimary onClick={startAudit} className="w-full sm:w-auto shrink-0 whitespace-nowrap animate-cta-green-pop" data-testid="audit-cta">
                 <Search className="w-3.5 h-3.5" strokeWidth={2.5} />
                 Run free audit
               </BtnPrimary>
             </div>
             <p className="text-xs text-[#444] mt-3 flex items-start sm:items-center gap-1.5 leading-relaxed">
               <Shield className="w-3 h-3" strokeWidth={1.5} />
-              Opens wpaudit.pro · PDF report via email · No login required
+              Opens in a new tab · PDF report via email · No login required
             </p>
           </div>
         </div>
@@ -709,7 +767,7 @@ const LandingPage = () => {
           <SectionLabel>About</SectionLabel>
           <h2 className="text-[clamp(26px,6vw,44px)] font-semibold leading-[1.1] sm:leading-[1.08] tracking-[-0.025em] mb-5 sm:mb-6">Hi, I&apos;m Chris.</h2>
           <p className="text-[15px] text-[#888] leading-[1.8] mb-4">
-            I&apos;m a technical SEO and web engineer in Australia, working with teams worldwide. For eight years
+            I&apos;m a technical SEO and web engineer in Australia, working with teams worldwide. For 5+ years
             I&apos;ve run audits as a consultant and shipped the fixes as a developer.
           </p>
           <p className="text-[15px] text-[#888] leading-[1.8] mb-4">
@@ -766,14 +824,14 @@ const LandingPage = () => {
                 <strong className="text-[#f0f0f0]">Response</strong> — Within 1 business day
               </span>
             </div>
-            <p className="text-[13px] text-[#555] leading-relaxed pt-6 lg:mt-auto lg:pt-0 lg:max-w-[320px]">
+            <p className="text-[13px] text-[#555] leading-relaxed pt-6 lg:max-w-[320px]">
               Or run a free{' '}
               <button
                 type="button"
                 onClick={scrollTo('audit')}
                 className="text-[#888] hover:text-[#00FF7F] bg-transparent border-none cursor-pointer p-0 underline underline-offset-2 decoration-[#333] hover:decoration-[#00FF7F]/40 transition-colors"
               >
-                WordPress health audit
+                site health audit
               </button>{' '}
               — results in under 60 seconds.
             </p>
@@ -783,9 +841,7 @@ const LandingPage = () => {
             data-testid="contact-form"
             className="bg-[#0a0a0a] border border-[#1e1e1e] rounded-xl p-6 sm:p-8"
           >
-            <p className="text-[11px] font-mono-brand uppercase tracking-[0.07em] text-[#555] mb-5">
-              Project enquiry
-            </p>
+            <SectionLabel>Project enquiry</SectionLabel>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
               <div>
                 <label htmlFor="contact-name" className="font-mono-brand text-[11px] uppercase tracking-[0.07em] text-[#666] block mb-2">
@@ -857,7 +913,12 @@ const LandingPage = () => {
                 <span>Thanks — your message is in. I&apos;ll be in touch within 1 business day.</span>
               </div>
             )}
-            <BtnPrimary type="submit" disabled={status.state === 'sending'} className="w-full py-3.5" data-testid="contact-submit">
+            <BtnPrimary
+              type="submit"
+              disabled={status.state === 'sending'}
+              className={`w-full py-3.5 ${status.state !== 'sending' ? 'animate-cta-green-pop' : ''}`}
+              data-testid="contact-submit"
+            >
               {status.state === 'sending' ? 'Sending…' : 'Send project enquiry →'}
             </BtnPrimary>
             <p className="text-[12px] text-[#555] text-center mt-4 leading-relaxed">
@@ -893,32 +954,46 @@ const LandingPage = () => {
             <span>© {new Date().getFullYear()}</span>
           </div>
         </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-3 sm:gap-[22px] justify-center md:justify-end w-full md:w-auto">
-          {[
-            ['#services', 'Services'],
-            ['#work', 'Work'],
-            ['#about', 'About'],
-            ['#contact', 'Contact'],
-          ].map(([href, label]) => (
-            <a key={href} href={href} onClick={scrollTo(href.slice(1))} className="text-[13px] text-[#888] hover:text-[#f0f0f0] no-underline">
-              {label}
+        <div className="flex flex-col gap-3 items-center md:items-end w-full md:w-auto">
+          <div className="flex flex-wrap gap-x-4 gap-y-3 sm:gap-[22px] justify-center md:justify-end">
+            {[
+              ['#services', 'Services'],
+              ['#about', 'About'],
+            ].map(([href, label]) => (
+              <a key={href} href={href} onClick={scrollTo(href.slice(1))} className="text-[13px] text-[#888] hover:text-[#00FF7F] no-underline transition-colors">
+                {label}
+              </a>
+            ))}
+            <a href="#audit" onClick={scrollTo('audit')} className="text-[13px] text-[#888] hover:text-[#00FF7F] no-underline transition-colors">
+              Free SEO Audit
             </a>
-          ))}
-          <a href="#audit" onClick={scrollTo('audit')} className="text-[13px] text-[#888] hover:text-[#f0f0f0] no-underline">
-            Free audit
-          </a>
-          <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#888] hover:text-[#f0f0f0] no-underline">
-            LinkedIn
-          </a>
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#888] hover:text-[#f0f0f0] no-underline">
-            GitHub
-          </a>
-          <a href="https://wpaudit.pro" target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#888] hover:text-[#f0f0f0] no-underline">
-            wpaudit.pro
-          </a>
-          <Link to="/auth" className="text-[13px] text-[#888] hover:text-[#f0f0f0] no-underline" data-testid="footer-login">
-            Client login
-          </Link>
+            <a href="https://wpaudit.pro" target="_blank" rel="noopener noreferrer" className="text-[13px] text-[#888] hover:text-[#00FF7F] no-underline transition-colors">
+              wpaudit.pro
+            </a>
+            <Link to="/auth" className="text-[13px] text-[#888] hover:text-[#00FF7F] no-underline transition-colors" data-testid="footer-login">
+              Client login
+            </Link>
+          </div>
+          <div className="flex items-center gap-4 justify-center md:justify-end">
+            <a
+              href="https://linkedin.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+              className="group inline-flex items-center no-underline"
+            >
+              <FaLinkedin className="w-[18px] h-[18px] text-[#888] group-hover:text-[#00FF7F] transition-colors" />
+            </a>
+            <a
+              href="https://github.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub"
+              className="group inline-flex items-center no-underline"
+            >
+              <SiGithub className="w-[18px] h-[18px] text-[#888] group-hover:text-[#00FF7F] transition-colors" />
+            </a>
+          </div>
         </div>
       </footer>
 
