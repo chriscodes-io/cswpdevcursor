@@ -12,7 +12,7 @@ import {
   X,
   ArrowRight,
 } from 'lucide-react';
-import { contactAPI } from '../lib/api';
+import { auditLeadAPI, contactAPI } from '../lib/api';
 
 const scrollTo = (id) => (e) => {
   e.preventDefault();
@@ -94,6 +94,7 @@ const LandingPage = () => {
   const [auditModalEmail, setAuditModalEmail] = useState('');
   const [auditModalSent, setAuditModalSent] = useState(false);
   const [auditModalSending, setAuditModalSending] = useState(false);
+  const [auditModalError, setAuditModalError] = useState('');
   const [navScrolled, setNavScrolled] = useState(false);
 
   useEffect(() => {
@@ -147,21 +148,33 @@ const LandingPage = () => {
     }
     setAuditModalEmail('');
     setAuditModalSent(false);
+    setAuditModalError('');
     setAuditModalOpen(true);
     window.open(`https://wpaudit.pro/?url=${encodeURIComponent(auditUrl.trim())}`, '_blank', 'noopener,noreferrer');
   };
 
-  const submitAuditModal = () => {
-    if (!auditModalEmail.trim()) {
+  const submitAuditModal = async () => {
+    const email = auditModalEmail.trim();
+    const url = auditUrl.trim();
+    if (!email) {
       shakeField(document.getElementById('modal-audit-email'));
       return;
     }
+    if (!url) {
+      setAuditModalError('Website URL is required.');
+      return;
+    }
     setAuditModalSending(true);
-    setTimeout(() => {
-      setAuditModalSending(false);
+    setAuditModalError('');
+    try {
+      await auditLeadAPI.submit({ url, email });
       setAuditModalSent(true);
       setTimeout(() => setAuditModalOpen(false), 3000);
-    }, 1600);
+    } catch (err) {
+      setAuditModalError(err.message || 'Could not send your report. Please try again in a moment.');
+    } finally {
+      setAuditModalSending(false);
+    }
   };
 
   const caseStudies = [
@@ -826,6 +839,12 @@ const LandingPage = () => {
                   placeholder="your@email.com"
                   className="w-full bg-[#0f0f0f] border border-[#1e1e1e] rounded-lg px-4 py-3 text-sm mb-4 outline-none focus:border-[#00FF7F]/22"
                 />
+                {auditModalError && (
+                  <div className="flex items-start gap-2 text-red-400 text-sm border border-red-500/30 bg-red-500/5 px-4 py-3 mb-4 rounded-lg" data-testid="audit-modal-error">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                    <span>{auditModalError}</span>
+                  </div>
+                )}
                 <BtnPrimary onClick={submitAuditModal} disabled={auditModalSending} className="w-full py-3">
                   {auditModalSending ? 'Sending…' : 'Send me the PDF report →'}
                 </BtnPrimary>

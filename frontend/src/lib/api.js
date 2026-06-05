@@ -1,4 +1,5 @@
 const API_URL = process.env.REACT_APP_BACKEND_URL;
+const AUDIT_API_URL = (process.env.REACT_APP_AUDIT_API_URL || '').replace(/\/$/, '');
 
 // ⚠️ SECURITY WARNING: Token Storage in localStorage
 // Current implementation stores JWT tokens in localStorage for development convenience.
@@ -292,6 +293,22 @@ export const contactAPI = {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
+  }
+};
+
+// Public audit lead API (no auth)
+export const auditLeadAPI = {
+  submit: async (data) => {
+    const response = await fetch(`${AUDIT_API_URL}/api/audit/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload.success === false) {
+      throw new Error(payload.error || payload.detail || 'Audit submission failed');
+    }
+    return payload;
   }
 };
 
