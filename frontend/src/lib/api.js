@@ -305,7 +305,7 @@ export const auditLeadAPI = {
       body: JSON.stringify(data)
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok || payload.success === false) {
+    if (!response.ok || payload.success !== true) {
       throw new Error(payload.error || payload.detail || 'Audit submission failed');
     }
     return payload;

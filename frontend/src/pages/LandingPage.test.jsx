@@ -92,4 +92,17 @@ describe('LandingPage audit modal', () => {
     expect(container.textContent).toContain('Send me the PDF report');
     expect(container.textContent).not.toContain('Report on its way!');
   });
+
+  it('does not show success for a response without explicit success', async () => {
+    global.fetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({}),
+    });
+
+    await openAuditModal();
+    await submitEmail('lead@example.com');
+
+    expect(container.textContent).toContain('Audit submission failed');
+    expect(container.textContent).not.toContain('Report on its way!');
+  });
 });
