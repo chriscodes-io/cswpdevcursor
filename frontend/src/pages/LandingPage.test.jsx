@@ -4,6 +4,8 @@ import { act, Simulate } from 'react-dom/test-utils';
 import { MemoryRouter } from 'react-router-dom';
 import LandingPage from './LandingPage';
 
+globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+
 describe('LandingPage audit modal', () => {
   let container;
   let root;
