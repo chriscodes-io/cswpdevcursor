@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capacity Ops — Dashboard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap">
+<style>
+:root{
+  --bg:#080808;--side:#0c0c0c;--card:#111;--card-h:#161616;
+  --b:#1e1e1e;--bl:rgba(255,255,255,0.06);
+  --accent:#00FF7F;--ad:rgba(0,255,127,0.08);--ab:rgba(0,255,127,0.2);
+  --t1:#f0f0f0;--t2:#888;--t3:#444;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',-apple-system,sans-serif;
+  --r:8px;--rl:12px;
+  --red:#ff4d4d;--amber:#f59e0b;--green:#00FF7F;--blue:#60a5fa;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--t1);font-family:var(--sans);font-size:14px;display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+aside{
+  width:220px;flex-shrink:0;background:var(--side);
+  border-right:0.5px solid var(--b);
+  display:flex;flex-direction:column;height:100vh;
+}
+.sb-logo{
+  padding:18px 16px;border-bottom:0.5px solid var(--b);
+  display:flex;align-items:center;gap:10px;
+}
+.sb-mark{
+  width:32px;height:32px;background:var(--accent);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:12px;font-weight:600;color:#000;flex-shrink:0;
+}
+.sb-name{font-size:13px;font-weight:500}
+.sb-role{font-size:10px;color:var(--t2);font-family:var(--mono);margin-top:1px}
+nav{flex:1;padding:12px 8px;overflow-y:auto}
+.nav-item{
+  display:flex;align-items:center;gap:10px;padding:9px 10px;
+  border-radius:var(--r);cursor:pointer;color:var(--t2);
+  font-size:13px;font-weight:500;transition:all .15s;margin-bottom:2px;
+}
+.nav-item:hover{background:rgba(255,255,255,.04);color:var(--t1)}
+.nav-item.active{background:var(--ad);color:var(--accent)}
+.nav-item svg{flex-shrink:0}
+.sb-bottom{padding:12px 8px;border-top:0.5px solid var(--b)}
+.collapse-btn{
+  display:flex;align-items:center;gap:8px;width:100%;
+  background:none;border:none;color:var(--t2);font-size:12px;
+  cursor:pointer;padding:8px 10px;border-radius:var(--r);
+  font-family:var(--sans);transition:color .15s;
+}
+.collapse-btn:hover{color:var(--t1)}
+
+/* MAIN */
+main{flex:1;overflow-y:auto;padding:28px 32px}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;
+}
+.page-title h1{font-size:22px;font-weight:600;letter-spacing:-.02em}
+.page-title p{font-size:13px;color:var(--t2);margin-top:3px}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.btn{
+  padding:8px 16px;border-radius:var(--r);font-size:13px;
+  font-weight:500;cursor:pointer;display:inline-flex;
+  align-items:center;gap:6px;border:none;font-family:var(--sans);
+  transition:opacity .15s,background .15s;
+}
+.btn-p{background:var(--accent);color:#000}
+.btn-p:hover{opacity:.84}
+.btn-o{background:transparent;color:var(--t1);border:0.5px solid var(--b)}
+.btn-o:hover{background:rgba(255,255,255,.04)}
+
+/* KPI CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.kpi{
+  background:var(--card);border:0.5px solid var(--b);
+  border-radius:var(--rl);padding:20px;transition:border-color .2s;
+}
+.kpi:hover{border-color:var(--ab)}
+.kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.kpi-label{font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em}
+.kpi-ico{
+  width:34px;height:34px;background:var(--ad);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;color:var(--accent);
+}
+.kpi-val{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--t1)}
+.kpi-sub{font-size:11px;color:var(--t2);margin-top:4px}
+.kpi-trend{font-size:11px;display:inline-flex;align-items:center;gap:3px;margin-top:4px}
+.up{color:#00FF7F}.down{color:#ff4d4d}
+
+/* PANELS */
+.panels{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:16px}
+.panel{background:var(--card);border:0.5px solid var(--b);border-radius:var(--rl);overflow:hidden}
+.panel-head{
+  padding:16px 20px;border-bottom:0.5px solid var(--b);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.panel-head h2{font-size:14px;font-weight:600}
+.panel-head a{font-size:12px;color:var(--accent);text-decoration:none}
+.panel-head a:hover{opacity:.75}
+table{width:100%;border-collapse:collapse}
+th{
+  font-size:10px;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--t3);padding:10px 20px;font-weight:500;text-align:left;
+  border-bottom:0.5px solid var(--b);
+}
+td{padding:12px 20px;font-size:13px;border-bottom:0.5px solid var(--b)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.badge{
+  font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;
+  text-transform:uppercase;letter-spacing:.04em;display:inline-block;
+}
+.badge-green{background:rgba(0,255,127,.12);color:#00FF7F}
+.badge-blue{background:rgba(96,165,250,.12);color:#60a5fa}
+.badge-amber{background:rgba(245,158,11,.12);color:#f59e0b}
+.badge-red{background:rgba(255,77,77,.12);color:#ff4d4d}
+.proj-icon{
+  width:28px;height:28px;background:var(--ad);border-radius:5px;
+  display:inline-flex;align-items:center;justify-content:center;
+  color:var(--accent);margin-right:8px;vertical-align:middle;flex-shrink:0;
+}
+
+/* ACTIVITY FEED */
+.activity{padding:4px 0}
+.act-item{
+  padding:12px 20px;display:flex;align-items:flex-start;gap:12px;
+  border-bottom:0.5px solid var(--b);
+}
+.act-item:last-child{border-bottom:none}
+.act-dot{
+  width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0;
+}
+.act-text{font-size:12px;line-height:1.5}
+.act-time{font-size:11px;color:var(--t3);margin-top:2px}
+
+/* QUICK ACTIONS */
+.qa-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
+.qa{
+  background:var(--card);border:0.5px solid var(--b);
+  border-radius:var(--rl);padding:20px;
+  display:flex;align-items:flex-start;gap:14px;cursor:pointer;
+  transition:border-color .2s,background .2s;
+}
+.qa:hover{border-color:var(--ab);background:var(--card-h)}
+.qa-ico{
+  width:38px;height:38px;background:var(--ad);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0;
+}
+.qa-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.qa-desc{font-size:12px;color:var(--t2);line-height:1.5}
+
+/* ================== AUDIT PAGE ================== */
+.ap{display:none}
+.ap.active{display:block}
+
+.audit-form{
+  background:var(--card);border:0.5px solid var(--b);
+  border-radius:var(--rl);padding:20px 24px;
+  display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;
+}
+select,input[type="url"]{
+  background:#0a0a0a;border:0.5px solid var(--b);
+  border-radius:var(--r);padding:9px 12px;color:var(--t1);
+  font-size:13px;font-family:var(--sans);outline:none;
+  transition:border-color .15s;
+}
+select{min-width:180px}
+input[type="url"]{flex:1;min-width:220px}
+select:focus,input[type="url"]:focus{border-color:var(--ab)}
+select option{background:#111}
+
+/* HEALTH SCORE */
+.health-hero{
+  background:var(--card);border:0.5px solid var(--b);
+  border-radius:var(--rl);padding:28px;
+  display:flex;align-items:center;gap:32px;
+  margin-bottom:16px;
+}
+.gauge-wrap{position:relative;width:120px;height:120px;flex-shrink:0}
+.gauge-svg{width:120px;height:120px}
+.gauge-num{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.gauge-score{font-family:var(--mono);font-size:28px;font-weight:600}
+.gauge-label{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em}
+.health-details{flex:1}
+.health-details h2{font-size:18px;font-weight:600;margin-bottom:6px}
+.health-details p{font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:16px}
+.health-meta{display:flex;gap:16px;flex-wrap:wrap}
+.hm{font-size:12px;color:var(--t2);display:flex;align-items:center;gap:5px}
+.hm strong{color:var(--t1)}
+
+/* SCORE BREAKDOWN */
+.score-cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+.sc{
+  background:var(--card);border:0.5px solid var(--b);
+  border-radius:var(--rl);padding:14px;text-align:center;
+  transition:border-color .2s;
+}
+.sc:hover{border-color:var(--bl)}
+.sc-ico{font-size:14px;margin-bottom:6px}
+.sc-num{font-family:var(--mono);font-size:22px;font-weight:600;margin-bottom:3px}
+.sc-lbl{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.05em}
+
+/* ISSUE SECTIONS */
+.issue-section{
+  background:var(--card);border:0.5px solid var(--b);
+  border-radius:var(--rl);margin-bottom:10px;overflow:hidden;
+}
+.issue-head{
+  padding:14px 18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:background .15s;
+}
+.issue-head:hover{background:rgba(255,255,255,.03)}
+.issue-title{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600}
+.issue-count{
+  font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;
+}
+.issue-chev{color:var(--t2);transition:transform .2s;font-size:16px}
+.issue-chev.open{transform:rotate(180deg)}
+.issue-body{display:none;border-top:0.5px solid var(--b)}
+.issue-body.open{display:block}
+.issue-item{
+  padding:11px 18px 11px 42px;
+  display:flex;align-items:flex-start;gap:10px;
+  border-bottom:0.5px solid var(--b);font-size:13px;
+}
+.issue-item:last-child{border-bottom:none}
+.ii-dot{
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;
+}
+.recs{padding:14px 18px;background:rgba(0,255,127,.03)}
+.recs p{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;font-family:var(--mono);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rec-item{font-size:12px;color:var(--t2);padding:4px 0;display:flex;align-items:flex-start;gap:7px;line-height:1.5}
+.rec-arr{color:var(--accent);flex-shrink:0;margin-top:1px}
+
+/* PDF EXPORT */
+.export-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  background:rgba(0,255,127,.06);border:0.5px solid var(--ab);
+  border-radius:var(--rl);padding:14px 20px;margin-bottom:16px;
+}
+.export-txt h3{font-size:14px;font-weight:600;margin-bottom:2px}
+.export-txt p{font-size:12px;color:var(--t2)}
+.export-actions{display:flex;gap:8px}
+
+/* TOASTS */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--card);border:0.5px solid var(--ab);
+  border-radius:var(--rl);padding:12px 18px;
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;z-index:999;
+  transform:translateY(80px);opacity:0;
+  transition:all .3s;pointer-events:none;
+}
+.toast.show{transform:translateY(0);opacity:1}
+.toast-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}
+
+/* NO RESULTS */
+.empty{
+  text-align:center;padding:60px 20px;color:var(--t2);
+}
+.empty svg{margin-bottom:14px;opacity:.4}
+.empty h3{font-size:16px;font-weight:500;margin-bottom:8px;color:var(--t1)}
+.empty p{font-size:13px;line-height:1.6}
+
+/* SCROLL */
+main::-webkit-scrollbar{width:4px}
+main::-webkit-scrollbar-track{background:transparent}
+main::-webkit-scrollbar-thumb{background:var(--b);border-radius:4px}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="sb-logo">
+    <div class="sb-mark">CS</div>
+    <div>
+      <div class="sb-name">Chris Smith</div>
+      <div class="sb-role">Technical SEO</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('clients')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      Clients
+    </div>
+    <div class="nav-item" onclick="showPage('projects')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+      Projects
+    </div>
+    <div class="nav-item" onclick="showPage('tasks')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Tasks
+    </div>
+    <div class="nav-item" onclick="showPage('audit')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      SEO Audit
+    </div>
+    <div class="nav-item" onclick="showPage('settings')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Settings
+    </div>
+  </nav>
+  <div class="sb-bottom">
+    <button class="collapse-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 19l-7-7 7-7M18 19l-7-7 7-7"/></svg>
+      Collapse
+    </button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+  <!-- ===== DASHBOARD PAGE ===== -->
+  <div id="page-dashboard" class="ap active">
+    <div class="topbar">
+      <div class="page-title">
+        <h1>Dashboard</h1>
+        <p>Welcome back, Chris. Here's your project overview.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-o">+ New Client</button>
+        <button class="btn btn-p">+ New Project</button>
+      </div>
+    </div>
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-top">
+          <div class="kpi-label">Active Projects</div>
+          <div class="kpi-ico">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+          </div>
+        </div>
+        <div class="kpi-val">3</div>
+        <div class="kpi-sub">Across 2 clients</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top">
+          <div class="kpi-label">Total Clients</div>
+          <div class="kpi-ico">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          </div>
+        </div>
+        <div class="kpi-val">2</div>
+        <div class="kpi-sub">Active retainers</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top">
+          <div class="kpi-label">Audits This Month</div>
+          <div class="kpi-ico">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+        </div>
+        <div class="kpi-val" id="kpiLeadsCount">0</div>
+        <div class="kpi-sub">Captured leads</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-top">
+          <div class="kpi-label">Avg Audit Score</div>
+          <div class="kpi-ico">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+        </div>
+        <div class="kpi-val" id="kpiAvgScore">—</div>
+        <div class="kpi-sub">Latest lead audit</div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-bottom:16px">
+      <div class="panel-head">
+        <h2>Recent Leads</h2>
+        <button class="btn btn-o" type="button" onclick="refreshDashboard()">Refresh</button>
+      </div>
+      <table>
+        <thead><tr><th>Email</th><th>Website</th><th>Score</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody id="leadsTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- PANELS -->
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Recent Projects</h2>
+          <a href="#" onclick="showPage('projects');return false">View all →</a>
+        </div>
+        <table>
+          <thead><tr><th>Project</th><th>Type</th><th>Status</th><th>Last audit</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="proj-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>Image On Line</td>
+              <td><span class="badge badge-blue">SEO</span></td>
+              <td><span class="badge badge-green">Active</span></td>
+              <td style="color:var(--t2)">2d ago — Score 60</td>
+            </tr>
+            <tr>
+              <td><span class="proj-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>PS Test</td>
+              <td><span class="badge badge-blue">SEO</span></td>
+              <td><span class="badge badge-green">Active</span></td>
+              <td style="color:var(--t2)">5d ago — Score 74</td>
+            </tr>
+            <tr>
+              <td><span class="proj-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></span>Stripe Pay Test</td>
+              <td><span class="badge badge-blue">SEO</span></td>
+              <td><span class="badge badge-amber">Pending</span></td>
+              <td style="color:var(--t3)">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Recent Activity</h2>
+          <a href="#">View all →</a>
+        </div>
+        <div class="activity">
+          <div class="act-item">
+            <div class="act-dot" style="background:#00FF7F"></div>
+            <div>
+              <div class="act-text">Audit completed — Image On Line (Score: 60)</div>
+              <div class="act-time">2 hours ago</div>
+            </div>
+          </div>
+          <div class="act-item">
+            <div class="act-dot" style="background:#60a5fa"></div>
+            <div>
+              <div class="act-text">New lead captured — wpaudit.pro (myshoeshop.com.au)</div>
+              <div class="act-time">Yesterday, 3:14pm</div>
+            </div>
+          </div>
+          <div class="act-item">
+            <div class="act-dot" style="background:#f59e0b"></div>
+            <div>
+              <div class="act-text">PDF report sent to james@imageonline.com.au</div>
+              <div class="act-time">2 days ago</div>
+            </div>
+          </div>
+          <div class="act-item">
+            <div class="act-dot" style="background:#00FF7F"></div>
+            <div>
+              <div class="act-text">Audit completed — PS Test (Score: 74)</div>
+              <div class="act-time">5 days ago</div>
+            </div>
+          </div>
+          <div class="act-item">
+            <div class="act-dot" style="background:#60a5fa"></div>
+            <div>
+              <div class="act-text">New client added — Image On Line</div>
+              <div class="act-time">1 week ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK ACTIONS -->
+    <div class="qa-grid">
+      <div class="qa" onclick="showPage('audit')">
+        <div class="qa-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </div>
+        <div>
+          <div class="qa-title">Run SEO Audit</div>
+          <div class="qa-desc">Analyse performance, SEO health, security and accessibility</div>
+        </div>
+      </div>
+      <div class="qa" onclick="showPage('tasks')">
+        <div class="qa-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        </div>
+        <div>
+          <div class="qa-title">Manage Tasks</div>
+          <div class="qa-desc">View and organise your project tasks across all clients</div>
+        </div>
+      </div>
+      <div class="qa" onclick="showPage('clients')">
+        <div class="qa-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <div>
+          <div class="qa-title">View Clients</div>
+          <div class="qa-desc">Manage client relationships and audit history</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SEO AUDIT PAGE ===== -->
+  <div id="page-audit" class="ap">
+    <div class="topbar">
+      <div class="page-title">
+        <h1>WordPress Health Dashboard</h1>
+        <p>Comprehensive website analysis in under 60 seconds</p>
+      </div>
+    </div>
+
+    <!-- AUDIT FORM -->
+    <div class="audit-form">
+      <label style="font-size:11px;color:var(--t2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap">Select project</label>
+      <select id="projSelect">
+        <option>Image On Line</option>
+        <option>PS Test</option>
+        <option>Stripe Pay Test</option>
+      </select>
+      <label style="font-size:11px;color:var(--t2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap">Website URL</label>
+      <input type="url" id="auditUrlIn" placeholder="https://example.com" value="https://imageonline.com.au" />
+      <button class="btn btn-p" onclick="showResults()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Run audit
+      </button>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div id="emptyState">
+      <div class="empty" style="background:var(--card);border:0.5px solid var(--b);border-radius:var(--rl)">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <h3>No audit results</h3>
+        <p>Enter a URL above and run an audit to see a comprehensive health analysis.</p>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--t2);padding:4px 10px;border:0.5px solid var(--b);border-radius:20px">Performance</span>
+          <span style="font-size:12px;color:var(--t2);padding:4px 10px;border:0.5px solid var(--b);border-radius:20px">SEO</span>
+          <span style="font-size:12px;color:var(--t2);padding:4px 10px;border:0.5px solid var(--b);border-radius:20px">Security</span>
+          <span style="font-size:12px;color:var(--t2);padding:4px 10px;border:0.5px solid var(--b);border-radius:20px">Technical</span>
+          <span style="font-size:12px;color:var(--t2);padding:4px 10px;border:0.5px solid var(--b);border-radius:20px">Accessibility</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS (hidden until run) -->
+    <div id="auditResults" style="display:none">
+
+      <!-- EXPORT BAR -->
+      <div class="export-bar">
+        <div class="export-txt">
+          <h3>PDF report ready</h3>
+          <p>Full branded audit report for imageonline.com.au — generated 2 minutes ago</p>
+        </div>
+        <div class="export-actions">
+          <button class="btn btn-o" onclick="shareLink()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Share link
+          </button>
+          <button class="btn btn-o" onclick="emailReport()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Email to client
+          </button>
+          <button class="btn btn-p" onclick="downloadPDF()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- HEALTH SCORE -->
+      <div class="health-hero">
+        <div class="gauge-wrap">
+          <svg class="gauge-svg" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#1e1e1e" stroke-width="10"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#f59e0b" stroke-width="10"
+              stroke-dasharray="188 126" stroke-dashoffset="63" stroke-linecap="round"
+              transform="rotate(-90 60 60)"/>
+          </svg>
+          <div class="gauge-num">
+            <div class="gauge-score" id="scoreOverall" style="color:#f59e0b">60</div>
+            <div class="gauge-label">/ 100</div>
+          </div>
+        </div>
+        <div class="health-details">
+          <h2>Overall health score — <span style="color:#f59e0b">Needs work</span></h2>
+          <p>Your site has strong performance (90) and technical foundations (85) but SEO basics are missing and security headers need attention. Fixing the 8 SEO issues would have the highest impact.</p>
+          <div class="health-meta">
+            <div class="hm"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Completed in <strong>5.4s</strong></div>
+            <div class="hm"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>Analyser: <strong>Fallback mode</strong></div>
+            <div class="hm" style="color:#00FF7F"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>+7 vs previous audit</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCORE BREAKDOWN -->
+      <div class="score-cards">
+        <div class="sc">
+          <div class="sc-ico">⚡</div>
+          <div class="sc-num" id="scorePerf" style="color:#00FF7F">90</div>
+          <div class="sc-lbl">Performance</div>
+        </div>
+        <div class="sc">
+          <div class="sc-ico">📈</div>
+          <div class="sc-num" id="scoreSeo" style="color:#ff4d4d">20</div>
+          <div class="sc-lbl">SEO</div>
+        </div>
+        <div class="sc">
+          <div class="sc-ico">🔒</div>
+          <div class="sc-num" style="color:#f59e0b">50</div>
+          <div class="sc-lbl">Security</div>
+        </div>
+        <div class="sc">
+          <div class="sc-ico">🔧</div>
+          <div class="sc-num" style="color:#00FF7F">85</div>
+          <div class="sc-lbl">Technical</div>
+        </div>
+        <div class="sc">
+          <div class="sc-ico">👁</div>
+          <div class="sc-num" style="color:#f59e0b">66</div>
+          <div class="sc-lbl">Accessibility</div>
+        </div>
+      </div>
+
+      <!-- ISSUE SECTIONS (collapsible) -->
+
+      <div class="issue-section">
+        <div class="issue-head" onclick="toggleIssue(this)">
+          <div class="issue-title">
+            <span style="font-size:16px">⚡</span>
+            Performance Issues
+            <span class="issue-count badge-green" style="background:rgba(0,255,127,.12);color:#00FF7F">✓ No issues</span>
+          </div>
+          <div class="issue-chev">▾</div>
+        </div>
+        <div class="issue-body">
+          <div class="issue-item"><div class="ii-dot" style="background:#00FF7F"></div>No performance issues detected. Core Web Vitals are within acceptable ranges.</div>
+        </div>
+      </div>
+
+      <div class="issue-section">
+        <div class="issue-head" onclick="toggleIssue(this)">
+          <div class="issue-title">
+            <span style="font-size:16px">📈</span>
+            SEO Issues
+            <span class="issue-count badge-red" style="background:rgba(255,77,77,.12);color:#ff4d4d">8 issues</span>
+          </div>
+          <div class="issue-chev open">▾</div>
+        </div>
+        <div class="issue-body open">
+          <div class="issue-item"><div class="ii-dot" style="background:#ff4d4d"></div>Missing page title</div>
+          <div class="issue-item"><div class="ii-dot" style="background:#ff4d4d"></div>Missing meta description</div>
+          <div class="issue-item"><div class="ii-dot" style="background:#ff4d4d"></div>Missing viewport meta tag</div>
+          <div class="issue-item"><div class="ii-dot" style="background:#ff4d4d"></div>No H1 tag found</div>
+          <div class="issue-item"><div class="ii-dot" style="background:#ff4d4d"></div>Missing canonical tag</div>
+          <div class="issue-item"><div class="ii-dot" style="background:#ff4d4d"></div>Incomplete Open Graph tags</div>
+          <div class="issue-item"><div class="ii-dot" style="background:#f59e0b"></div>XML sitemap not found</div>
+          <div class="issue-item"><div class="ii-dot" style="background:#f59e0b"></div>robots.txt not found</div>
+          <div class="recs">
+            <p>→ Recommendations</p>
+            <div class="rec-item"><span class="rec-arr">→</span>Add a descriptive title tag (50–60 characters)</div>
+            <div class="rec-item"><span class="rec-arr">→</span>Add meta description (150–160 characters)</div>
+            <div class="rec-item"><span class="rec-arr">→</span>Add viewport meta tag for mobile responsiveness</div>
+            <div class="rec-item"><span class="rec-arr">→</span>Add exactly one H1 tag with main keyword</div>
+            <div class="rec-item"><span class="rec-arr">→</span>Add canonical tag to avoid duplicate content issues</div>
+            <div class="rec-item"><span class="rec-arr">→</span>Add complete OG tags for better social sharing</div>
+            <div class="rec-item"><span class="rec-arr">→</span>Create and submit XML sitemap to search engines</div>
+            <div class="rec-item"><span class="rec-arr">→</span>Add robots.txt file to control crawling</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="issue-section">
+        <div class="issue-head" onclick="toggleIssue(this)">
+          <div class="issue-title">
+            <span style="font-size:16px">🔒</span>
+            Security Issues
+            <span class="issue-count badge-amber" style="background:rgba(245,158,11,.12);color:#f59e0b">5 issues</span>
+          </div>
+          <div class="issue-chev">▾</div>
+        </div>
+        <div class="issue-body">
+          <div class="issue-item"><div class="ii-dot" style="background:#f59e0b"></div>HSTS header missing</div>
+          <div class="issue-item"><div class="ii-dot" style="background:#f59e0b"></div>X-Content-Type-Options header missing</div>
+          <div class="issue-item"><div class="ii-dot" style="background:#f59e0b"></div>X-Frame-Options header missing (clickjacking risk)</div>
+          <div class="issue-item"><div class="ii-dot" style="background:#f59e0b"></div>CSP header missing</div>
+          <div class="issue-item"><div class="ii-dot" style="background:#f59e0b"></div>XSS Protection header missing</div>
+          <div class="recs">
+            <p>→ Recommendations</p>
+            <div class="rec-item"><span class="rec-arr">→</span>Add Strict-Transport-Security security header</div>
+            <div class="rec-item"><span class="rec-arr">→</span>Add X-Content-Type-Options security header</div>
+            <div class="rec-item"><span class="rec-arr">→</span>Add X-Frame-Options security header</div>
+            <div class="rec-item"><span class="rec-arr">→</span>Add Content-Security-Policy security header</div>
+            <div class="rec-item"><span class="rec-arr">→</span>Add X-XSS-Protection security header</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="issue-section">
+        <div class="issue-head" onclick="toggleIssue(this)">
+          <div class="issue-title">
+            <span style="font-size:16px">🔧</span>
+            Technical Issues
+            <span class="issue-count badge-amber" style="background:rgba(245,158,11,.12);color:#f59e0b">1 issue</span>
+          </div>
+          <div class="issue-chev">▾</div>
+        </div>
+        <div class="issue-body">
+          <div class="issue-item"><div class="ii-dot" style="background:#f59e0b"></div>Missing viewport meta tag (not mobile-friendly)</div>
+          <div class="recs">
+            <p>→ Recommendations</p>
+            <div class="rec-item"><span class="rec-arr">→</span>Add viewport meta tag for mobile optimisation</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="issue-section">
+        <div class="issue-head" onclick="toggleIssue(this)">
+          <div class="issue-title">
+            <span style="font-size:16px">👁</span>
+            Accessibility Issues
+            <span class="issue-count badge-amber" style="background:rgba(245,158,11,.12);color:#f59e0b">2 issues</span>
+          </div>
+          <div class="issue-chev">▾</div>
+        </div>
+        <div class="issue-body">
+          <div class="issue-item"><div class="ii-dot" style="background:#f59e0b"></div>Missing lang attribute on &lt;html&gt; tag</div>
+          <div class="issue-item"><div class="ii-dot" style="background:#f59e0b"></div>No ARIA landmarks found</div>
+          <div class="recs">
+            <p>→ Recommendations</p>
+            <div class="rec-item"><span class="rec-arr">→</span>Add lang attribute to specify page language</div>
+            <div class="rec-item"><span class="rec-arr">→</span>Use semantic HTML5 landmarks (header, nav, main, footer)</div>
+          </div>
+          <div style="padding:12px 18px;border-top:0.5px solid var(--b)">
+            <div style="font-size:12px;color:var(--t2)">WCAG Compliance Estimate — <span style="color:#ff4d4d">Non-compliant</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /auditResults -->
+  </div>
+
+  <!-- ===== OTHER PAGES (stub) ===== -->
+  <div id="page-clients" class="ap"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><h3>Clients</h3><p>Manage your client relationships and audit history.</p></div></div>
+  <div id="page-projects" class="ap"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg><h3>Projects</h3><p>View and manage all active projects.</p></div></div>
+  <div id="page-tasks" class="ap"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/></svg><h3>Tasks</h3><p>View and organise project tasks across all clients.</p></div></div>
+  <div id="page-settings" class="ap"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="3"/></svg><h3>Settings</h3><p>Configure your workspace and API keys.</p></div></div>
+
+</main>
+
+<!-- TOAST -->
+<div id="toast" class="toast">
+  <div class="toast-dot"></div>
+  <span id="toastMsg">Copied to clipboard</span>
+</div>
+
+<script src="/js/dashboard-api.js"></script>
+<script>
+function showPage(id){
+  document.querySelectorAll('.ap').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const map={dashboard:0,clients:1,projects:2,tasks:3,audit:4,settings:5};
+  document.querySelectorAll('.nav-item')[map[id]]?.classList.add('active');
+}
+
+function showResults(){
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('auditResults').style.display='block';
+}
+
+function toggleIssue(head){
+  const body=head.nextElementSibling;
+  const chev=head.querySelector('.issue-chev');
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+function downloadPDF(){toast('PDF report downloaded')}
+function emailReport(){toast('Report sent to client email')}
+// shareLink defined in dashboard-api.js
+</script>
+</body>
+</html>

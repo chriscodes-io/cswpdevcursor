@@ -1,0 +1,16 @@
+---
+description: Pica BuildKit rules for integration development
+alwaysApply: false
+---
+
+# Pica Buildkit – LLM Rules
+
+When building tools with **Pica MCP**:
+
+1. **Discover first** — `list_pica_integrations` → `search_pica_platform_actions` → `get_pica_action_knowledge` before coding.
+2. **Do not overwrite existing projects** — extend minimally (see `lead-qualification-agent/`).
+3. **Secrets** — `PICA_SECRET` + `{PLATFORM}_CONNECTION_KEY` in env, never in logs.
+4. **Executor** — Use passthrough: `https://api.picaos.com/v1/passthrough` + path only (no full third-party URL).
+5. **Headers** — `x-pica-secret`, `x-pica-connection-key`, `x-pica-action-id`.
+
+Lead qualification agent in this repo implements Gmail → OpenAI → HubSpot → Slack using discovered action IDs in `lead-qualification-agent/src/pica/actions.ts`.
