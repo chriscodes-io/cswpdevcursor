@@ -438,6 +438,12 @@ const LandingPage = () => {
 
   const [featuredCase, ...otherCases] = caseStudies;
 
+  const mainNavLinks = [
+    ['work', 'Portfolio'],
+    ['about', 'About'],
+    ['contact', 'Contact'],
+  ];
+
   return (
     <div className="min-h-screen bg-[#080808] text-[#f0f0f0] overflow-x-hidden" data-testid="landing-page">
       {/* Nav */}
@@ -477,6 +483,21 @@ const LandingPage = () => {
         </div>
 
         <ul className="hidden md:flex items-center gap-[26px] list-none m-0 p-0">
+          {[
+            ['work', 'Portfolio'],
+            ['about', 'About'],
+            ['contact', 'Contact'],
+          ].map(([id, label]) => (
+            <li key={id}>
+              <a
+                href={`#${id}`}
+                onClick={handleNavClick(id)}
+                className="text-[13px] text-[#888] hover:text-[#f0f0f0] no-underline transition-colors"
+              >
+                {label}
+              </a>
+            </li>
+          ))}
           <li>
             <a
               href="#contact"
@@ -497,6 +518,9 @@ const LandingPage = () => {
         >
           <ul className="flex flex-col gap-1 p-4 list-none m-0">
             {[
+              ['work', 'Portfolio'],
+              ['about', 'About'],
+              ['contact', 'Contact'],
               ['audit', 'Free audit'],
             ].map(([id, label]) => (
               <li key={id}>
