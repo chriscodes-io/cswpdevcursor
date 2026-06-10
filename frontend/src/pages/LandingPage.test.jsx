@@ -7,6 +7,13 @@ import LandingPage from './LandingPage';
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
+class MockIntersectionObserver {
+  observe() {}
+  disconnect() {}
+}
+
+global.IntersectionObserver = MockIntersectionObserver;
+
 describe('LandingPage audit modal', () => {
   let container;
   let root;
