@@ -70,7 +70,7 @@ describe('LandingPage audit modal', () => {
     await openAuditModal();
     await submitEmail('lead@example.com');
 
-    expect(global.fetch).toHaveBeenCalledWith('/api/audit/submit', {
+    expect(global.fetch).toHaveBeenCalledWith('https://wpaudit.pro/api/audit/submit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url: 'https://example.com', email: 'lead@example.com' }),
