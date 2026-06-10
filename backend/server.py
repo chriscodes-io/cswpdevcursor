@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 import asyncio
 import time
 import uuid
+from pymongo.errors import DuplicateKeyError
 from .models import (
     User, UserCreate, UserLogin, Token,
     Client, ClientCreate, ClientUpdate,
@@ -54,6 +55,27 @@ app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
 
+def _public_registration_enabled() -> bool:
+    return os.environ.get("ALLOW_PUBLIC_REGISTRATION", "").lower() in {"1", "true", "yes", "on"}
+
+
+async def _claim_first_user_registration():
+    if _public_registration_enabled():
+        return
+
+    existing_user = await db.users.find_one({}, {"_id": 1})
+    if existing_user:
+        raise HTTPException(status_code=403, detail="Registration is closed")
+
+    try:
+        await db.registration_locks.insert_one({
+            "_id": "first-user-registration",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+    except DuplicateKeyError:
+        raise HTTPException(status_code=403, detail="Registration is closed")
+
+
 def _normalize_pagination(skip: int = 0, limit: int = 1000):
     skip = max(skip, 0)
     limit = max(1, min(limit, 1000))
@@ -69,6 +91,8 @@ async def register(user_data: UserCreate):
     existing_user = await db.users.find_one({"email": user_data.email}, {"_id": 0})
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
+
+    await _claim_first_user_registration()
     
     # Create user
     user = User(

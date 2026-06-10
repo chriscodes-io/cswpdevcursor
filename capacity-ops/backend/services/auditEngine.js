@@ -1,28 +1,145 @@
+const dns = require('dns').promises;
+const net = require('net');
 const cheerio = require('cheerio');
 
 const PAGESPEED_ENDPOINT = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
+const MAX_REDIRECTS = 5;
+const MAX_HTML_BYTES = 2 * 1024 * 1024;
+
+function isBlockedHostname(hostname) {
+  const normalized = hostname.toLowerCase().replace(/\.$/, '');
+  return normalized === 'localhost' || normalized.endsWith('.localhost');
+}
+
+function isBlockedIpv4(ip) {
+  const parts = ip.split('.').map((part) => Number(part));
+  if (parts.length !== 4 || parts.some((part) => Number.isNaN(part))) return true;
+  const [a, b] = parts;
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 100 && b >= 64 && b <= 127) ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 192 && b === 0) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    a >= 224
+  );
+}
+
+function isBlockedIp(ip) {
+  const version = net.isIP(ip);
+  if (version === 4) return isBlockedIpv4(ip);
+  if (version !== 6) return true;
+
+  const normalized = ip.toLowerCase();
+  if (normalized.startsWith('::ffff:')) {
+    return isBlockedIpv4(normalized.replace('::ffff:', ''));
+  }
+  return (
+    normalized === '::' ||
+    normalized === '::1' ||
+    normalized.startsWith('fc') ||
+    normalized.startsWith('fd') ||
+    /^fe[89ab][0-9a-f]:/.test(normalized) ||
+    normalized.startsWith('ff')
+  );
+}
 
 function normalizeUrl(input) {
   let url = input.trim();
   if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
   const parsed = new URL(url);
+  if (!['http:', 'https:'].includes(parsed.protocol)) {
+    throw new Error('Only http and https URLs can be audited');
+  }
+  if (parsed.username || parsed.password) {
+    throw new Error('URL credentials are not allowed');
+  }
   return parsed.href;
+}
+
+async function assertPublicAuditUrl(rawUrl) {
+  const href = normalizeUrl(rawUrl);
+  const parsed = new URL(href);
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, '');
+
+  if (isBlockedHostname(hostname)) {
+    throw new Error('Private or internal URLs cannot be audited');
+  }
+
+  if (net.isIP(hostname)) {
+    if (isBlockedIp(hostname)) {
+      throw new Error('Private or internal URLs cannot be audited');
+    }
+    return href;
+  }
+
+  const addresses = await dns.lookup(hostname, { all: true, verbatim: true });
+  if (!addresses.length || addresses.some(({ address }) => isBlockedIp(address))) {
+    throw new Error('Private or internal URLs cannot be audited');
+  }
+
+  return href;
+}
+
+async function readResponseText(res, url) {
+  const contentLength = Number(res.headers.get('content-length'));
+  if (Number.isFinite(contentLength) && contentLength > MAX_HTML_BYTES) {
+    throw new Error(`Response too large fetching ${url}`);
+  }
+
+  const reader = res.body?.getReader();
+  if (!reader) {
+    const html = await res.text();
+    if (Buffer.byteLength(html, 'utf8') > MAX_HTML_BYTES) {
+      throw new Error(`Response too large fetching ${url}`);
+    }
+    return html;
+  }
+
+  const decoder = new TextDecoder();
+  let bytes = 0;
+  let html = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    bytes += value.byteLength;
+    if (bytes > MAX_HTML_BYTES) {
+      throw new Error(`Response too large fetching ${url}`);
+    }
+    html += decoder.decode(value, { stream: true });
+  }
+  html += decoder.decode();
+  return html;
 }
 
 async function fetchHtml(url) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const res = await fetch(url, {
-      signal: controller.signal,
-      headers: { 'User-Agent': 'CapacityOps-Audit/1.0 (+https://chrissmith.dev)' },
-      redirect: 'follow',
-    });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} fetching ${url}`);
+    let currentUrl = await assertPublicAuditUrl(url);
+    for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
+      const res = await fetch(currentUrl, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'CapacityOps-Audit/1.0 (+https://chrissmith.dev)' },
+        redirect: 'manual',
+      });
+
+      if (res.status >= 300 && res.status < 400 && res.headers.get('location')) {
+        currentUrl = await assertPublicAuditUrl(new URL(res.headers.get('location'), currentUrl).href);
+        continue;
+      }
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status} fetching ${currentUrl}`);
+      }
+      const html = await readResponseText(res, currentUrl);
+      return { html, finalUrl: res.url || currentUrl };
     }
-    const html = await res.text();
-    return { html, finalUrl: res.url || url };
+    throw new Error('Too many redirects fetching URL');
   } finally {
     clearTimeout(timeout);
   }
@@ -142,7 +259,7 @@ function clamp(n) {
 }
 
 async function runAudit(rawUrl) {
-  const url = normalizeUrl(rawUrl);
+  const url = await assertPublicAuditUrl(rawUrl);
   const { html, finalUrl } = await fetchHtml(url);
   const htmlAnalysis = analyzeHtml(html, finalUrl);
 
@@ -189,4 +306,4 @@ async function runAudit(rawUrl) {
   };
 }
 
-module.exports = { runAudit, normalizeUrl };
+module.exports = { runAudit, normalizeUrl, assertPublicAuditUrl, fetchHtml };

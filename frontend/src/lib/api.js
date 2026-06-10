@@ -1,5 +1,5 @@
 const API_URL = process.env.REACT_APP_BACKEND_URL;
-const AUDIT_API_URL = (process.env.REACT_APP_AUDIT_API_URL || '').replace(/\/$/, '');
+const AUDIT_API_URL = (process.env.REACT_APP_AUDIT_API_URL || 'https://wpaudit.pro').replace(/\/$/, '');
 
 // ⚠️ SECURITY WARNING: Token Storage in localStorage
 // Current implementation stores JWT tokens in localStorage for development convenience.
