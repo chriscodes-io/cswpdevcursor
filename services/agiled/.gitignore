@@ -1,0 +1,9 @@
+node_modules/
+dist/
+api/*.js
+api/*.d.ts
+api/*.map
+.env
+.env.local
+*.log
+.vercel
