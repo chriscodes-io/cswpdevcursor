@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chris Smith — Technical SEO & Web Engineer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root{
+  --bg:#080808;--card:#0f0f0f;--card-h:#141414;
+  --b:#1e1e1e;--bl:rgba(255,255,255,0.06);
+  --accent:#00FF7F;--ad:rgba(0,255,127,0.08);--ab:rgba(0,255,127,0.22);
+  --t1:#f0f0f0;--t2:#888;--t3:#444;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',-apple-system,sans-serif;
+  --r:8px;--rl:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--t1);font-family:var(--sans);font-size:16px;line-height:1.6}
+
+/* NAV */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(8,8,8,0.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:0.5px solid var(--b);
+  padding:0 6%;height:62px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.n-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.n-mark{
+  width:34px;height:34px;background:var(--accent);border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:13px;font-weight:600;color:#000;flex-shrink:0;
+}
+.n-text{font-size:14px;font-weight:500;color:var(--t1);line-height:1.2}
+.n-sub{font-size:10px;color:var(--t2);font-family:var(--mono);letter-spacing:.05em}
+.n-links{display:flex;align-items:center;gap:26px;list-style:none}
+.n-links a{font-size:13px;color:var(--t2);text-decoration:none;transition:color .15s}
+.n-links a:hover{color:var(--t1)}
+.n-cta{
+  background:var(--accent)!important;color:#000!important;
+  padding:7px 16px;border-radius:var(--r);
+  font-weight:600;font-size:13px!important;
+  transition:opacity .15s!important;
+}
+.n-cta:hover{opacity:.82!important}
+
+/* LAYOUT */
+section{padding:90px 6%}
+.lbl{
+  font-family:var(--mono);font-size:11px;font-weight:500;
+  letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.lbl::before{content:'';display:block;width:20px;height:1px;background:var(--accent)}
+h2{font-size:clamp(28px,3.5vw,40px);font-weight:600;line-height:1.1;letter-spacing:-.02em}
+h3{font-size:16px;font-weight:600;margin-bottom:8px}
+
+/* HERO */
+#hero{
+  padding-top:90px;padding-bottom:90px;
+  display:grid;grid-template-columns:1fr 380px;
+  gap:64px;align-items:center;
+  min-height:calc(100vh - 62px);
+}
+.h-eye{
+  font-family:var(--mono);font-size:11px;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--accent);
+  margin-bottom:22px;
+  display:flex;align-items:center;gap:8px;
+}
+.h-eye::before{content:'';width:20px;height:1px;background:var(--accent)}
+h1{
+  font-size:clamp(38px,5.5vw,60px);font-weight:600;
+  line-height:1.08;letter-spacing:-.025em;margin-bottom:22px;
+}
+h1 em{font-style:normal;color:var(--accent)}
+.h-sub{font-size:16px;color:var(--t2);line-height:1.75;max-width:500px;margin-bottom:36px}
+.h-acts{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+/* BUTTONS */
+.btn{
+  padding:12px 22px;border-radius:var(--r);font-size:14px;
+  font-weight:600;cursor:pointer;text-decoration:none;
+  display:inline-flex;align-items:center;gap:7px;
+  transition:opacity .15s,transform .1s;border:none;
+  font-family:var(--sans);
+}
+.btn-p{background:var(--accent);color:#000}
+.btn-p:hover{opacity:.84;transform:translateY(-1px)}
+.btn-g{
+  background:transparent;color:var(--t1);
+  border:0.5px solid var(--bl);
+}
+.btn-g:hover{border-color:rgba(255,255,255,.18);background:rgba(255,255,255,.04)}
+
+/* STAT CARDS */
+.stats{display:flex;flex-direction:column;gap:10px}
+.scard{
+  background:var(--card);border:0.5px solid var(--b);
+  border-radius:var(--rl);padding:20px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  transition:border-color .2s,background .2s;
+}
+.scard:hover{border-color:var(--ab);background:var(--card-h)}
+.snum{
+  font-family:var(--mono);font-size:30px;font-weight:600;
+  color:var(--accent);line-height:1;
+}
+.slbl{font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+.sico{
+  width:42px;height:42px;background:var(--ad);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0;
+}
+
+/* SERVICES */
+#services{background:#000;border-top:0.5px solid var(--b);border-bottom:0.5px solid var(--b)}
+.svc-hd{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:end;margin-bottom:48px}
+.svc-hd p{font-size:15px;color:var(--t2);line-height:1.7}
+.svc-grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:1px;background:var(--b);
+  border:0.5px solid var(--b);border-radius:var(--rl);overflow:hidden;
+}
+.svc{background:var(--card);padding:32px;transition:background .2s}
+.svc:hover{background:var(--card-h)}
+.svc-ico{
+  width:44px;height:44px;background:var(--ad);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--accent);margin-bottom:18px;flex-shrink:0;
+}
+.svc p{font-size:14px;color:var(--t2);line-height:1.65;margin-top:6px}
+
+/* AUDIT CTA */
+#audit{
+  border-top:0.5px solid var(--b);
+  background:radial-gradient(ellipse 60% 50% at 50% 100%, rgba(0,255,127,.04) 0%, transparent 100%);
+}
+.aud-wrap{max-width:720px;margin:0 auto;text-align:center}
+.aud-wrap h2{margin-bottom:14px}
+.aud-wrap .aud-sub{font-size:15px;color:var(--t2);margin-bottom:40px;line-height:1.7}
+.aud-box{
+  background:var(--card);border:0.5px solid var(--b);
+  border-radius:var(--rl);padding:32px;text-align:left;
+}
+.aud-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.apill{
+  font-size:12px;padding:4px 11px;border-radius:20px;
+  border:0.5px solid var(--b);color:var(--t2);
+  display:flex;align-items:center;gap:5px;
+}
+.apill-dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.ainp{
+  width:100%;background:#060606;border:0.5px solid var(--b);
+  border-radius:var(--r);padding:13px 16px;
+  color:var(--t1);font-size:14px;font-family:var(--mono);
+  outline:none;transition:border-color .15s;margin-bottom:10px;
+}
+.ainp::placeholder{color:var(--t3)}
+.ainp:focus{border-color:var(--ab)}
+.arow{display:flex;gap:8px}
+.arow .ainp{margin-bottom:0;flex:1;font-family:var(--sans)}
+.adis{
+  font-size:12px;color:var(--t3);margin-top:14px;
+  display:flex;align-items:center;gap:6px;
+}
+
+/* PROOF */
+#proof{background:#000;border-top:0.5px solid var(--b)}
+.t-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:40px}
+.tcard{
+  background:var(--card);border:0.5px solid var(--b);
+  border-radius:var(--rl);padding:26px;
+  transition:border-color .2s;
+}
+.tcard:hover{border-color:var(--ab)}
+.tstars{color:var(--accent);font-size:14px;letter-spacing:2px;margin-bottom:14px}
+.tq{font-size:14px;color:var(--t2);line-height:1.7;margin-bottom:22px;font-style:italic}
+.tau{display:flex;align-items:center;gap:10px}
+.tav{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--ad);border:0.5px solid var(--ab);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;color:var(--accent);flex-shrink:0;
+}
+.tname{font-size:13px;font-weight:500}
+.trole{font-size:12px;color:var(--t2)}
+
+/* ABOUT */
+#about{display:grid;grid-template-columns:1.1fr 1fr;gap:80px;align-items:center}
+.ab-p{font-size:15px;color:var(--t2);line-height:1.8;margin-bottom:16px}
+.ab-facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:32px}
+.fc{
+  background:var(--card);border:0.5px solid var(--b);
+  border-radius:var(--rl);padding:22px;
+  transition:border-color .2s;
+}
+.fc:hover{border-color:var(--ab)}
+.fn{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--accent);margin-bottom:4px}
+.fl{font-size:12px;color:var(--t2)}
+
+/* CONTACT */
+#contact{background:#000;border-top:0.5px solid var(--b)}
+.ct-grid{display:grid;grid-template-columns:1fr 1.2fr;gap:64px;align-items:start}
+.ct-info h2{margin-bottom:16px}
+.ct-info p{font-size:15px;color:var(--t2);line-height:1.75;margin-bottom:24px}
+.ct-row{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--t2);margin-bottom:10px}
+.ct-row strong{color:var(--t1)}
+.fg{margin-bottom:14px}
+label{
+  font-size:11px;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--t2);display:block;margin-bottom:6px;font-family:var(--mono);
+}
+input,textarea{
+  width:100%;background:var(--card);border:0.5px solid var(--b);
+  border-radius:var(--r);padding:12px 16px;color:var(--t1);
+  font-size:14px;font-family:var(--sans);outline:none;
+  transition:border-color .15s;resize:vertical;
+}
+input::placeholder,textarea::placeholder{color:var(--t3)}
+input:focus,textarea:focus{border-color:var(--ab)}
+textarea{min-height:120px}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* FOOTER */
+footer{
+  border-top:0.5px solid var(--b);padding:30px 6%;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.fc2{font-size:13px;color:var(--t3)}
+.fl2{display:flex;gap:22px}
+.fl2 a{font-size:13px;color:var(--t2);text-decoration:none;transition:color .15s}
+.fl2 a:hover{color:var(--t1)}
+
+/* MODAL */
+.modal-bg{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.85);z-index:200;
+  align-items:center;justify-content:center;
+}
+.modal-bg.on{display:flex}
+.modal{
+  background:var(--card);border:0.5px solid var(--b);
+  border-radius:var(--rl);padding:36px;max-width:460px;
+  width:90%;position:relative;
+}
+.mcl{
+  position:absolute;top:14px;right:14px;background:none;
+  border:none;color:var(--t2);font-size:22px;cursor:pointer;line-height:1;
+}
+.mcl:hover{color:var(--t1)}
+.modal h3{font-size:22px;font-weight:600;margin-bottom:8px}
+.msub{font-size:14px;color:var(--t2);margin-bottom:22px;line-height:1.65}
+.murl{
+  background:var(--bg);border:0.5px solid var(--ab);
+  border-radius:var(--r);padding:10px 14px;
+  font-family:var(--mono);font-size:12px;color:var(--accent);
+  margin-bottom:18px;word-break:break-all;
+}
+
+/* SUCCESS */
+.success-state{text-align:center;padding:20px 0}
+.success-ico{
+  width:56px;height:56px;background:var(--ad);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--accent);font-size:26px;margin:0 auto 16px;
+}
+.success-state h3{font-size:20px;margin-bottom:8px}
+.success-state p{font-size:14px;color:var(--t2);line-height:1.65}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  #hero{grid-template-columns:1fr}.stats{display:none}
+  .svc-hd{grid-template-columns:1fr}.svc-hd p{display:none}
+  .t-grid{grid-template-columns:1fr}
+  #about{grid-template-columns:1fr;gap:40px}
+  .ct-grid{grid-template-columns:1fr;gap:40px}
+  .fr{grid-template-columns:1fr}
+  footer{flex-direction:column;gap:16px;text-align:center}
+  .n-links{gap:16px}
+}
+@media(max-width:600px){
+  section{padding:60px 5%}
+  .svc-grid{grid-template-columns:1fr}
+  .arow{flex-direction:column}
+  .n-links{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="n-logo">
+    <div class="n-mark">CS</div>
+    <div>
+      <div class="n-text">Chris Smith</div>
+      <div class="n-sub">Technical SEO · Web Engineer</div>
+    </div>
+  </a>
+  <ul class="n-links">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#audit">Free audit</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#contact" class="n-cta">Start a project →</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div>
+    <p class="h-eye">Technical SEO & Web Engineering — Australia · Remote Worldwide</p>
+    <h1>Bridging the gap between <em>SEO &amp; implementation.</em></h1>
+    <p class="h-sub">I handle both technical SEO strategy and the development work, so nothing gets lost between consultants, developers, and project managers. Faster execution, cleaner communication, fewer bottlenecks.</p>
+    <div class="h-acts">
+      <a href="#audit" class="btn btn-p">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Run free audit
+      </a>
+      <a href="#contact" class="btn btn-g">Start a project</a>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="scard">
+      <div>
+        <div class="snum">150+</div>
+        <div class="slbl">Projects delivered</div>
+      </div>
+      <div class="sico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+    </div>
+    <div class="scard">
+      <div>
+        <div class="snum">94</div>
+        <div class="slbl">Avg Lighthouse score</div>
+      </div>
+      <div class="sico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+    </div>
+    <div class="scard">
+      <div>
+        <div class="snum">+312%</div>
+        <div class="slbl">Average traffic lift</div>
+      </div>
+      <div class="sico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </div>
+    </div>
+    <div class="scard">
+      <div>
+        <div class="snum">8yr</div>
+        <div class="slbl">Industry experience</div>
+      </div>
+      <div class="sico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="svc-hd">
+    <div>
+      <p class="lbl">What I do</p>
+      <h2>Development-led<br>technical SEO.</h2>
+    </div>
+    <p>I sit between strategy and code so audits actually ship. No tickets lost in handover, no consultants blaming devs, no devs ignoring recommendations.</p>
+  </div>
+  <div class="svc-grid">
+    <div class="svc">
+      <div class="svc-ico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      </div>
+      <h3>Technical SEO Audits</h3>
+      <p>Crawl, render, indexing, structured data, Core Web Vitals — with prioritised fix lists, not a PDF you hand to a dev and hope for the best.</p>
+    </div>
+    <div class="svc">
+      <div class="svc-ico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      </div>
+      <h3>Headless WordPress Builds</h3>
+      <p>Next.js + WordPress decoupled for speed, security, and editor flexibility. Built on WP Engine with Faust.js — performance by default.</p>
+    </div>
+    <div class="svc">
+      <div class="svc-ico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <h3>Performance Engineering</h3>
+      <p>Real LCP/CLS/INP improvements driven by Lighthouse & field data. I don't just report the issues — I fix them and verify the impact.</p>
+    </div>
+    <div class="svc">
+      <div class="svc-ico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3>SEO Implementation</h3>
+      <p>I write the code, ship the changes, and verify the impact in Search Console. Your recommendations don't sit in a backlog.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FREE AUDIT — wpaudit.pro CTA -->
+<section id="audit">
+  <div class="aud-wrap">
+    <p class="lbl">Free tool</p>
+    <h2>WordPress Health<br>Dashboard</h2>
+    <p class="aud-sub">Instant analysis of your WordPress site's performance, SEO health, security, and accessibility — results in under 60 seconds. Full PDF report delivered to your inbox.</p>
+    <div class="aud-box">
+      <div class="aud-pills">
+        <div class="apill"><span class="apill-dot"></span>Performance</div>
+        <div class="apill"><span class="apill-dot"></span>SEO Health</div>
+        <div class="apill"><span class="apill-dot"></span>Security</div>
+        <div class="apill"><span class="apill-dot"></span>Accessibility</div>
+        <div class="apill"><span class="apill-dot"></span>Core Web Vitals</div>
+      </div>
+      <input class="ainp" type="url" id="auditUrl" placeholder="https://yourwordpresssite.com.au" />
+      <div class="arow">
+        <input class="ainp" type="email" id="auditEmail" placeholder="your@email.com — we'll send the full PDF report" />
+        <button class="btn btn-p" onclick="startAudit()" style="flex-shrink:0;white-space:nowrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Run free audit
+        </button>
+      </div>
+      <div class="adis">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        No login required. PDF report delivered to your inbox within 60 seconds. No spam.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF -->
+<section id="proof" style="background:#000;border-top:0.5px solid var(--b)">
+  <p class="lbl">Client results</p>
+  <h2>What clients say.</h2>
+  <div class="t-grid">
+    <div class="tcard">
+      <div class="tstars">★★★★★</div>
+      <p class="tq">"Chris is the rare person who understands both the SEO strategy and how to actually implement it. No handoff friction — just results showing up in Search Console."</p>
+      <div class="tau">
+        <div class="tav">JM</div>
+        <div><div class="tname">James Mitchell</div><div class="trole">Head of Digital, SaaS Enterprise</div></div>
+      </div>
+    </div>
+    <div class="tcard">
+      <div class="tstars">★★★★★</div>
+      <p class="tq">"Lighthouse scores went from 58 to 96 across the board. Organic traffic up 240% in six months. Genuinely impressive — and he did all the implementation himself."</p>
+      <div class="tau">
+        <div class="tav">SR</div>
+        <div><div class="tname">Sarah Reynolds</div><div class="trole">Marketing Director, eCommerce</div></div>
+      </div>
+    </div>
+    <div class="tcard">
+      <div class="tstars">★★★★★</div>
+      <p class="tq">"Most SEO consultants hand you a 60-page PDF and disappear. Chris ships the fixes, shows you the impact, and doesn't charge extra every time you ask a question."</p>
+      <div class="tau">
+        <div class="tav">DK</div>
+        <div><div class="tname">David Kim</div><div class="trole">CTO, Digital Agency</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div>
+    <p class="lbl">About</p>
+    <h2 style="margin-bottom:20px">Hi, I'm Chris.</h2>
+    <p class="ab-p">I'm a technical SEO & web engineer based in Australia, working with clients worldwide. For the past eight years I've sat on both sides of the table — running technical audits as a consultant and shipping the fixes as a developer.</p>
+    <p class="ab-p">Diploma in IT (Web Front-End &amp; Back-End Web Development) and Dual Diploma in Business (Marketing &amp; Advertising).</p>
+    <p class="ab-p">Most agencies hand you a 60-page audit and walk away. Most developers see SEO as someone else's problem. I do both, end to end, so your site actually gets faster, cleaner and more visible — not just documented.</p>
+    <div style="margin-top:28px">
+      <a href="#contact" class="btn btn-p">Work with me →</a>
+    </div>
+  </div>
+  <div class="ab-facts">
+    <div class="fc"><div class="fn">150+</div><div class="fl">Projects delivered</div></div>
+    <div class="fc"><div class="fn">8yr</div><div class="fl">Industry experience</div></div>
+    <div class="fc"><div class="fn">+312%</div><div class="fl">Avg traffic lift</div></div>
+    <div class="fc"><div class="fn">94</div><div class="fl">Avg Lighthouse score</div></div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="ct-grid">
+    <div class="ct-info">
+      <p class="lbl">Get in touch</p>
+      <h2 style="margin-bottom:16px">Start a project.</h2>
+      <p>Tell me a bit about your site and what you're trying to fix. I'll review it and come back to you within one business day.</p>
+      <div class="ct-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span><strong>Location</strong> — Australia · Remote Worldwide</span>
+      </div>
+      <div class="ct-row">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span><strong>Response</strong> — Within 1 business day</span>
+      </div>
+    </div>
+    <div>
+      <div class="fr">
+        <div class="fg"><label>Name *</label><input type="text" placeholder="Your name" /></div>
+        <div class="fg"><label>Email *</label><input type="email" placeholder="your@email.com" /></div>
+      </div>
+      <div class="fg"><label>Website URL</label><input type="url" placeholder="https://yoursite.com" /></div>
+      <div class="fg"><label>Message *</label><textarea placeholder="Tell me about your site and what you're trying to achieve..."></textarea></div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;padding:14px 22px">Send message →</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div class="n-mark" style="width:26px;height:26px;font-size:10px">CS</div>
+      <span style="font-size:13px;font-weight:500">Chris Smith</span>
+      <span style="font-size:12px;color:var(--t3)">— Technical SEO & Web Engineer</span>
+    </div>
+    <div class="fc2">© 2026 Chris Smith. Built in Australia. Remote worldwide.</div>
+  </div>
+  <div class="fl2">
+    <a href="#services">Services</a>
+    <a href="#audit">Free audit</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+    <a href="https://linkedin.com" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://wpaudit.pro" target="_blank" rel="noopener">wpaudit.pro</a>
+    <a href="/dashboard.html">Client login</a>
+  </div>
+</footer>
+
+<!-- AUDIT CONFIRMATION MODAL -->
+<div id="auditModal" class="modal-bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="mcl" onclick="closeModal()">×</button>
+    <div id="modalInner">
+      <h3>Audit running…</h3>
+      <p class="msub">Analysing your site's performance, SEO health, security, and accessibility. Your full PDF report will be emailed shortly.</p>
+      <div class="murl" id="modalUrl"></div>
+      <div class="fg"><label>Your email address *</label><input type="email" id="modalEmail" placeholder="your@email.com" /></div>
+      <button class="btn btn-p" onclick="submitModal()" id="modalBtn" style="width:100%;justify-content:center;padding:13px 22px">Send me the PDF report →</button>
+      <div class="adis" style="justify-content:center;margin-top:12px">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        No spam. Your email is only used to send this report.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/audit-form.js"></script>
+<script>
+// Smooth active nav link highlight on scroll
+const sections=document.querySelectorAll('section[id]');
+const navLinks=document.querySelectorAll('.n-links a[href^="#"]');
+window.addEventListener('scroll',()=>{
+  let current='';
+  sections.forEach(s=>{if(window.scrollY>=s.offsetTop-100)current=s.id});
+  navLinks.forEach(a=>{
+    a.style.color=a.getAttribute('href')==='#'+current?'var(--accent)':'';
+  });
+},{passive:true});
+</script>
+</body>
+</html>
