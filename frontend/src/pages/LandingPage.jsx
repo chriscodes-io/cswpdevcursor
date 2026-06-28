@@ -1001,7 +1001,7 @@ const LandingPage = () => {
               wpaudit.pro
             </a>
             <Link to="/auth" className="text-[13px] text-[#888] hover:text-[#00FF7F] no-underline transition-colors" data-testid="footer-login">
-              Client login
+              Team login
             </Link>
           </div>
           <div className="flex items-center gap-4 justify-center md:justify-end">

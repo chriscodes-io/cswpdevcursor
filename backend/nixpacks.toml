@@ -1,0 +1,11 @@
+# Nixpacks config for Railway (service root: backend/)
+# https://nixpacks.com/docs/configuration/file
+
+[variables]
+NIXPACKS_PYTHON_VERSION = "3.11"
+
+[phases.install]
+cmds = ["pip install -r requirements-prod.txt"]
+
+[start]
+cmd = "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"

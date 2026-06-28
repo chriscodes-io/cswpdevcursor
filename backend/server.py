@@ -79,6 +79,15 @@ def _use_agiled_crm() -> bool:
     return os.getenv("USE_AGILED_CRM", "true").lower() in ("1", "true", "yes")
 
 
+def _public_registration_allowed() -> bool:
+    return os.getenv("ALLOW_PUBLIC_REGISTRATION", "").lower() in ("1", "true", "yes")
+
+
+def _cors_origins() -> List[str]:
+    raw = os.environ.get("CORS_ORIGINS", "*")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
 async def _lookup_user_by_id(user_id: str) -> Optional[dict]:
     if await ping_db():
         return await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0})
@@ -102,7 +111,13 @@ async def _lookup_user_by_email(email: str) -> Optional[dict]:
 
 @api_router.post("/auth/register", response_model=Token)
 async def register(user_data: UserCreate):
-    """Register a new user"""
+    """Register a new user (disabled in production unless ALLOW_PUBLIC_REGISTRATION=true)."""
+    if not _public_registration_allowed():
+        raise HTTPException(
+            status_code=403,
+            detail="Registration is disabled. Contact your administrator for access.",
+        )
+
     if await ping_db():
         existing_user = await db.users.find_one({"email": user_data.email}, {"_id": 0})
         if existing_user:
@@ -1211,17 +1226,27 @@ app.include_router(api_router)
 @app.get("/health")
 async def health():
     mongo_ok = await ping_db()
+    production = os.getenv("DEV_AUTH_FALLBACK", "true").lower() not in ("1", "true", "yes")
+    if production and not mongo_ok:
+        status = "degraded"
+    elif mongo_ok or dev_auth.is_enabled():
+        status = "ok"
+    else:
+        status = "degraded"
     return {
-        "status": "ok" if mongo_ok or dev_auth.is_enabled() else "degraded",
+        "status": status,
         "mongodb": mongo_ok,
         "dev_auth_fallback": dev_auth.is_enabled(),
+        "allow_public_registration": _public_registration_allowed(),
         "agiled_configured": agiled_client.is_configured(),
+        "email_configured": email_is_configured(),
+        "stripe_configured": _stripe_is_configured(),
     }
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_origins=_cors_origins(),
     allow_methods=["*"],
     allow_headers=["*"],
 )

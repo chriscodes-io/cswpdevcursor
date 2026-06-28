@@ -30,11 +30,15 @@ DEV_AUTH_FALLBACK=false
 # Generate: python3 -c "import secrets; print(secrets.token_urlsafe(48))"
 JWT_SECRET=<long-random-secret>
 
-FRONTEND_URL=https://cswp.dev
+FRONTEND_URL=https://app.cswp.dev
+CORS_ORIGINS=https://app.cswp.dev,https://chrissmithwp.com
+
+# Public self-registration — false for staff-only production
+ALLOW_PUBLIC_REGISTRATION=false
 
 # Password reset emails
 RESEND_API_KEY=re_...
-RESEND_FROM_EMAIL=hello@cswp.dev
+RESEND_FROM_EMAIL=hello@chrissmithwp.com
 
 # Agiled (optional here if already in services/agiled/.env)
 AGILED_API_KEY=...
@@ -55,6 +59,18 @@ backend/.venv/bin/python scripts/migrate-dev-to-atlas.py
 
 Then sign in with the same email/password, or use **Forgot password** after Resend is configured.
 
+## 3b. Create staff users (production)
+
+When `ALLOW_PUBLIC_REGISTRATION=false`, create accounts with:
+
+```bash
+backend/.venv/bin/python scripts/create-staff-user.py \
+  --email you@chrissmithwp.com \
+  --name "Chris Smith"
+```
+
+Repeat for each team member. Clients use `portal.cswp.dev` (Hub Client), not this app.
+
 ## 4. Verify
 
 ```bash
@@ -69,11 +85,54 @@ curl -X POST http://localhost:8001/api/auth/login \
 ## 5. Production checklist
 
 - [ ] `DEV_AUTH_FALLBACK=false`
+- [ ] `ALLOW_PUBLIC_REGISTRATION=false` (backend)
+- [ ] `REACT_APP_ALLOW_SIGNUP=false` (Vercel/Netlify build env for `app.cswp.dev`)
 - [ ] `JWT_SECRET` rotated (not the dev default)
-- [ ] `FRONTEND_URL` set to production domain
+- [ ] `FRONTEND_URL=https://app.cswp.dev`
+- [ ] `REACT_APP_BACKEND_URL=https://api.cswp.dev`
+- [ ] Staff user(s) created via `scripts/create-staff-user.py`
 - [ ] Resend configured for password reset emails
-- [ ] Atlas IP allowlist includes your host (Vercel uses dynamic IPs — use `0.0.0.0/0` with strong DB credentials, or Atlas VPC peering for stricter setups)
+- [ ] Atlas IP allowlist includes your host (Railway/Render — use `0.0.0.0/0` with strong DB credentials, or VPC peering for stricter setups)
 - [ ] Agiled API key rotated if it was ever exposed
+- [ ] Marketing site (`chrissmithwp.com`) links: **Client portal** → `portal.cswp.dev`, **Team login** → `app.cswp.dev/auth`
+
+## 6. Deploy API to Railway (Phase 1)
+
+Recommended host: **Railway** (config in `backend/railway.toml`). Alternative: **Render** (`render.yaml` at repo root).
+
+### 6.1 Railway setup
+
+1. Sign in at [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub repo** → select this repository.
+2. Open the new service → **Settings** → set **Root Directory** to `backend`.
+3. **Variables** → paste values from `deploy/api-production.env.example` (use Atlas `MONGO_URL`, strong `JWT_SECRET`, Agiled + Resend keys).
+4. **Settings** → **Networking** → **Generate Domain** (temporary `*.up.railway.app` URL).
+5. Deploy. When green, open `https://<railway-host>/health` — expect `"mongodb": true`, `"dev_auth_fallback": false`, `"allow_public_registration": false`.
+6. **Settings** → **Networking** → **Custom Domain** → add `api.cswp.dev`.
+7. At **Spaceship** → DNS for `cswp.dev` → add CNAME: `api` → `<railway-host>` (Railway shows the exact target).
+8. Create staff user (from your machine, with `backend/.env.local` pointing at Atlas):
+
+```bash
+backend/.venv/bin/python scripts/create-staff-user.py \
+  --email you@chrissmithwp.com \
+  --name "Chris Smith"
+```
+
+9. Verify production:
+
+```bash
+./deploy/verify-api.sh https://api.cswp.dev
+```
+
+### 6.2 Render alternative
+
+1. [render.com](https://render.com) → **New** → **Blueprint** → connect repo (uses `render.yaml`).
+2. Fill sync=false secrets when prompted (`MONGO_URL`, `AGILED_API_KEY`, `RESEND_*`, etc.).
+3. Add custom domain `api.cswp.dev` in the service **Settings** → point Spaceship CNAME to Render.
+
+### 6.3 After API is live
+
+- Phase 2: deploy React app to Vercel at `app.cswp.dev` with `REACT_APP_BACKEND_URL=https://api.cswp.dev`.
+- Stripe webhook: `https://api.cswp.dev/api/webhook/stripe`.
 
 ## Data layout
 

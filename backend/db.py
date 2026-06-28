@@ -11,13 +11,16 @@ _env_dir = Path(__file__).parent
 load_dotenv(_env_dir / ".env")
 load_dotenv(_env_dir / ".env.local", override=True)
 
+_mongo_url = os.environ.get("MONGO_URL", "mongodb://localhost:27017/")
+_db_name = os.environ.get("DB_NAME", "seo_project_manager")
+
 _client = AsyncIOMotorClient(
-    os.environ["MONGO_URL"],
+    _mongo_url,
     serverSelectionTimeoutMS=1500,
     connectTimeoutMS=1500,
     socketTimeoutMS=1500,
 )
-db = _client[os.environ["DB_NAME"]]
+db = _client[_db_name]
 
 
 async def ping_db() -> bool:

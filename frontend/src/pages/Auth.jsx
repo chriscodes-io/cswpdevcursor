@@ -19,10 +19,14 @@ const demoAccessAnimation = {
   transition: { delay: 0.3 }
 };
 
+const allowSignup = process.env.REACT_APP_ALLOW_SIGNUP === 'true';
+
 const Auth = ({ onLogin, initialMode = 'login' }) => {
   const [searchParams] = useSearchParams();
   const resetToken = searchParams.get('token');
-  const [mode, setMode] = useState(resetToken ? 'reset' : initialMode);
+  const safeInitialMode =
+    initialMode === 'signup' && !allowSignup ? 'login' : initialMode;
+  const [mode, setMode] = useState(resetToken ? 'reset' : safeInitialMode);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -91,6 +95,11 @@ const Auth = ({ onLogin, initialMode = 'login' }) => {
         return;
       }
 
+      if (isSignUp && !allowSignup) {
+        setError('Registration is disabled. Contact your administrator for access.');
+        return;
+      }
+
       if (isSignUp && !formData.name) {
         setError('Name is required for sign up');
         return;
@@ -122,7 +131,7 @@ const Auth = ({ onLogin, initialMode = 'login' }) => {
       ? 'Reset Password'
       : isSignUp
         ? 'Create Account'
-        : 'Welcome Back';
+        : 'Team sign in';
 
   const subtitle = isReset
     ? 'Choose a new password for your account'
@@ -130,7 +139,7 @@ const Auth = ({ onLogin, initialMode = 'login' }) => {
       ? 'Enter your email and we will send reset instructions'
       : isSignUp
         ? 'Sign up to start managing your projects'
-        : 'Sign in to your account to continue';
+        : 'Staff workspace — sign in to continue';
 
   const submitLabel = isReset
     ? 'Update Password'
@@ -155,7 +164,7 @@ const Auth = ({ onLogin, initialMode = 'login' }) => {
             </div>
           </div>
           <p className="text-muted-foreground">
-            Project management workspace — sign in to continue
+            Project management workspace — staff sign in
           </p>
         </div>
 
@@ -296,7 +305,7 @@ const Auth = ({ onLogin, initialMode = 'login' }) => {
               >
                 Back to sign in
               </button>
-            ) : (
+            ) : allowSignup ? (
               <button
                 type="button"
                 onClick={() => switchMode(isSignUp ? 'login' : 'signup')}
@@ -305,11 +314,15 @@ const Auth = ({ onLogin, initialMode = 'login' }) => {
               >
                 {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
               </button>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Need access? Contact your administrator.
+              </p>
             )}
           </div>
         </Card>
 
-        {!isForgot && !isReset && (
+        {!isForgot && !isReset && allowSignup && (
           <motion.div
             {...demoAccessAnimation}
             className="mt-6 p-4 bg-muted/50 border border-border rounded-lg"
@@ -317,9 +330,9 @@ const Auth = ({ onLogin, initialMode = 'login' }) => {
             <div className="flex items-start gap-3">
               <Terminal className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium mb-1">Demo Access</p>
+                <p className="font-medium mb-1">Local development</p>
                 <p className="text-muted-foreground">
-                  Create an account to get started with email and password.
+                  Sign up is enabled for local testing only.
                 </p>
               </div>
             </div>

@@ -1,0 +1,50 @@
+# Render Blueprint — CSWP FastAPI backend (Phase 1)
+# https://render.com/docs/blueprint-spec
+#
+# Deploy: connect this repo in Render → New Blueprint → select render.yaml
+# Or create a Web Service manually with root directory "backend".
+
+services:
+  - type: web
+    name: cswp-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements-prod.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.11"
+      - key: MONGO_URL
+        sync: false
+      - key: DB_NAME
+        value: seo_project_manager
+      - key: DEV_AUTH_FALLBACK
+        value: "false"
+      - key: ALLOW_PUBLIC_REGISTRATION
+        value: "false"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://app.cswp.dev
+      - key: CORS_ORIGINS
+        value: https://app.cswp.dev,https://chrissmithwp.com
+      - key: USE_AGILED_CRM
+        value: "true"
+      - key: AGILED_API_KEY
+        sync: false
+      - key: AGILED_API_BASE_URL
+        value: https://api.agiled.ai/public/v1
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: CONTACT_TO_EMAIL
+        sync: false
+      - key: STRIPE_API_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: GOOGLE_PAGESPEED_API_KEY
+        sync: false
