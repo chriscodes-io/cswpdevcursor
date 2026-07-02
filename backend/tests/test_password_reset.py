@@ -1,6 +1,6 @@
 """Focused tests for password reset token consumption."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 import sys
 
@@ -40,7 +40,7 @@ async def test_consume_reset_token_accepts_mongo_datetime_expires_at(monkeypatch
         "token_hash": password_reset._hash_token(token),
         "user_id": "user-123",
         "email": "staff@example.com",
-        "expires_at": datetime.utcnow() + timedelta(minutes=15),
+        "expires_at": (datetime.now(timezone.utc) + timedelta(minutes=15)).replace(tzinfo=None),
         "used": False,
     }
     fake_db = _FakeDb(doc)
