@@ -965,6 +965,20 @@ def _stripe_is_configured() -> bool:
     return stripe_service.is_configured()
 
 
+async def _get_project_for_checkout(project_id: str) -> dict:
+    if _use_agiled_crm() and agiled_client.is_configured():
+        try:
+            result = await agiled_client.get_project(project_id)
+        except AgiledError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+        agiled_project = result.get("data") or result
+        meta = await project_meta.get_meta(project_id)
+        return project_to_app(agiled_project, meta)
+
+    return await db.projects.find_one({"id": project_id}, {"_id": 0})
+
+
 @api_router.post("/payments/checkout", response_model=PaymentTransaction)
 async def create_payment_checkout(
     payload: CreateCheckoutRequest,
@@ -976,7 +990,7 @@ async def create_payment_checkout(
     if not _stripe_is_configured():
         raise HTTPException(status_code=503, detail="Stripe is not configured")
 
-    project = await db.projects.find_one({"id": payload.project_id}, {"_id": 0})
+    project = await _get_project_for_checkout(payload.project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
     if not project.get("budget") or float(project["budget"]) <= 0:
