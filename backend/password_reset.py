@@ -10,6 +10,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
+from pymongo import ReturnDocument
+
 from . import dev_auth
 from .auth import hash_password
 from .db import db, ping_db
@@ -75,21 +77,15 @@ async def consume_reset_token(token: str) -> Optional[dict[str, str]]:
     now = _now()
 
     if await ping_db():
-        doc = await db.password_reset_tokens.find_one(
-            {"token_hash": token_hash, "used": False},
+        doc = await db.password_reset_tokens.find_one_and_update(
+            {"token_hash": token_hash, "used": False, "expires_at": {"$gte": now}},
+            {"$set": {"used": True}},
             {"_id": 0},
+            return_document=ReturnDocument.BEFORE,
         )
         if not doc:
             return None
 
-        expires_at = datetime.fromisoformat(doc["expires_at"].replace("Z", "+00:00"))
-        if expires_at < now:
-            return None
-
-        await db.password_reset_tokens.update_one(
-            {"token_hash": token_hash},
-            {"$set": {"used": True}},
-        )
         return {"user_id": doc["user_id"], "email": doc["email"]}
 
     if dev_auth.is_enabled():
