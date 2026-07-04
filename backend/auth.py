@@ -1,16 +1,30 @@
 """JWT auth helpers and FastAPI dependency."""
 
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Optional
 
 import bcrypt
 import jwt
 import os
+from dotenv import load_dotenv
 from fastapi import HTTPException, Request
 
-JWT_SECRET = os.environ.get("JWT_SECRET", "your-secret-key-change-in-production")
+_env_dir = Path(__file__).parent
+load_dotenv(_env_dir / ".env")
+load_dotenv(_env_dir / ".env.local", override=True)
+
+_DEFAULT_JWT_SECRET = "your-secret-key-change-in-production"
+_PLACEHOLDER_JWT_SECRETS = {_DEFAULT_JWT_SECRET, "change-me-in-production", ""}
+JWT_SECRET = os.environ.get("JWT_SECRET", _DEFAULT_JWT_SECRET).strip()
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
+
+if (
+    os.environ.get("DEV_AUTH_FALLBACK", "true").lower() not in ("1", "true", "yes")
+    and JWT_SECRET in _PLACEHOLDER_JWT_SECRETS
+):
+    raise RuntimeError("JWT_SECRET must be set to a strong secret when DEV_AUTH_FALLBACK=false")
 
 
 def hash_password(password: str) -> str:
