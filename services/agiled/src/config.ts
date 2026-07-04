@@ -21,6 +21,7 @@ export const config = {
     webhookSecret: optional("AGILED_WEBHOOK_SECRET"),
     legacyWebhookSubscriptionId: optional("AGILED_LEGACY_WEBHOOK_SUBSCRIPTION_ID"),
   },
+  crmProxyToken: optional("CRM_PROXY_TOKEN"),
   webhookPath: "/webhooks/agiled",
   get webhookUrl(): string {
     return `${this.appUrl}${this.webhookPath}`;
