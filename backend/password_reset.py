@@ -27,6 +27,17 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+def _parse_expires_at(value: Any) -> datetime:
+    if isinstance(value, datetime):
+        expires_at = value
+    else:
+        expires_at = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+
+    if expires_at.tzinfo is None:
+        return expires_at.replace(tzinfo=timezone.utc)
+    return expires_at.astimezone(timezone.utc)
+
+
 def generate_token() -> str:
     return secrets.token_urlsafe(32)
 
@@ -82,7 +93,7 @@ async def consume_reset_token(token: str) -> Optional[dict[str, str]]:
         if not doc:
             return None
 
-        expires_at = datetime.fromisoformat(doc["expires_at"].replace("Z", "+00:00"))
+        expires_at = _parse_expires_at(doc["expires_at"])
         if expires_at < now:
             return None
 
@@ -98,7 +109,7 @@ async def consume_reset_token(token: str) -> Optional[dict[str, str]]:
             if entry.get("token_hash") != token_hash or entry.get("used"):
                 continue
 
-            expires_at = datetime.fromisoformat(entry["expires_at"].replace("Z", "+00:00"))
+            expires_at = _parse_expires_at(entry["expires_at"])
             if expires_at < now:
                 return None
 
