@@ -965,6 +965,29 @@ def _stripe_is_configured() -> bool:
     return stripe_service.is_configured()
 
 
+async def _resolve_project_for_payment(project_id: str) -> dict:
+    """Load a project for checkout from Agiled (default) or MongoDB."""
+    if _use_agiled_crm() and agiled_client.is_configured():
+        try:
+            result = await agiled_client.get_project(project_id)
+        except AgiledError as exc:
+            if exc.status_code == 404:
+                raise HTTPException(status_code=404, detail="Project not found") from exc
+            raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
+        agiled_project = result.get("data") or result
+        if not agiled_project:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        meta = await project_meta.get_meta(project_id)
+        return project_to_app(agiled_project, meta)
+
+    project = await db.projects.find_one({"id": project_id}, {"_id": 0})
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return project
+
+
 @api_router.post("/payments/checkout", response_model=PaymentTransaction)
 async def create_payment_checkout(
     payload: CreateCheckoutRequest,
@@ -976,9 +999,7 @@ async def create_payment_checkout(
     if not _stripe_is_configured():
         raise HTTPException(status_code=503, detail="Stripe is not configured")
 
-    project = await db.projects.find_one({"id": payload.project_id}, {"_id": 0})
-    if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+    project = await _resolve_project_for_payment(payload.project_id)
     if not project.get("budget") or float(project["budget"]) <= 0:
         raise HTTPException(status_code=400, detail="Project has no positive budget set")
 
