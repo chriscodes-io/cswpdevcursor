@@ -27,6 +27,17 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
+def _parse_expires_at(value: Any) -> datetime:
+    """Normalize MongoDB BSON datetimes and ISO strings to aware UTC."""
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value
+    if isinstance(value, str):
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    raise TypeError(f"Unsupported expires_at type: {type(value)!r}")
+
+
 def generate_token() -> str:
     return secrets.token_urlsafe(32)
 
@@ -82,7 +93,7 @@ async def consume_reset_token(token: str) -> Optional[dict[str, str]]:
         if not doc:
             return None
 
-        expires_at = datetime.fromisoformat(doc["expires_at"].replace("Z", "+00:00"))
+        expires_at = _parse_expires_at(doc["expires_at"])
         if expires_at < now:
             return None
 
@@ -98,7 +109,7 @@ async def consume_reset_token(token: str) -> Optional[dict[str, str]]:
             if entry.get("token_hash") != token_hash or entry.get("used"):
                 continue
 
-            expires_at = datetime.fromisoformat(entry["expires_at"].replace("Z", "+00:00"))
+            expires_at = _parse_expires_at(entry["expires_at"])
             if expires_at < now:
                 return None
 
