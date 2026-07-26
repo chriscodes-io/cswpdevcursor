@@ -61,6 +61,43 @@ def get_checkout_status(session_id: str) -> dict[str, Any]:
     }
 
 
+def resolve_local_payment_status(
+    local_status: str,
+    *,
+    upstream_payment_status: Optional[str],
+    upstream_session_status: Optional[str],
+) -> str:
+    """Map Stripe session state onto our payment_transactions.status.
+
+    Once a transaction is paid, that status is terminal and must not be
+    demoted by later status polls or out-of-order expired webhook events.
+    """
+    if local_status == "paid":
+        return "paid"
+    if upstream_payment_status == "paid":
+        return "paid"
+    if upstream_session_status == "expired":
+        return "expired"
+    if upstream_payment_status in ("unpaid", "no_payment_required"):
+        if local_status == "expired":
+            return "expired"
+        return "pending"
+    return local_status
+
+
+def payment_status_update_filter(session_id: str, new_status: str) -> dict[str, Any]:
+    """Mongo filter that never overwrites a paid row with a non-paid status.
+
+    Status polls and webhooks race on the same session_id; without this
+    guard a stale poll can clobber a webhook's paid write.
+    """
+    if new_status == "paid":
+        return {"session_id": session_id, "status": {"$ne": "paid"}}
+    if new_status == "expired":
+        return {"session_id": session_id, "status": {"$nin": ["paid", "expired"]}}
+    return {"session_id": session_id, "status": {"$nin": ["paid", "expired"]}}
+
+
 def parse_webhook_event(payload: bytes, signature: str) -> Optional[dict[str, Any]]:
     """Verify webhook signature and return normalized checkout update, if any."""
     secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "").strip()
