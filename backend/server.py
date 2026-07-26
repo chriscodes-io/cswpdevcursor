@@ -1071,28 +1071,37 @@ async def get_payment_status(session_id: str, request: Request, current_user: di
         }
     
     try:
-        new_status = txn["status"]
-        if upstream_payment_status == "paid" and txn["status"] != "paid":
-            new_status = "paid"
-        elif upstream_session_status == "expired":
-            new_status = "expired"
-        elif upstream_payment_status in ("unpaid", "no_payment_required"):
-            new_status = txn["status"] if txn["status"] in ("paid", "expired") else "pending"
+        new_status = stripe_service.resolve_local_payment_status(
+            txn["status"],
+            upstream_payment_status=upstream_payment_status,
+            upstream_session_status=upstream_session_status,
+        )
+        next_payment_status = (
+            "paid" if new_status == "paid" else upstream_payment_status
+        )
 
-        if new_status != txn["status"] or upstream_payment_status != txn.get("payment_status"):
-            await db.payment_transactions.update_one(
-                {"session_id": session_id},
+        if new_status != txn["status"] or next_payment_status != txn.get("payment_status"):
+            result = await db.payment_transactions.update_one(
+                stripe_service.payment_status_update_filter(session_id, new_status),
                 {"$set": {
                     "status": new_status,
-                    "payment_status": upstream_payment_status,
+                    "payment_status": next_payment_status,
                     "updated_at": datetime.now(timezone.utc).isoformat(),
                 }},
             )
+            # Stale poll lost a race to webhook paid — surface the terminal state.
+            if result.matched_count == 0 and new_status != "paid":
+                latest = await db.payment_transactions.find_one(
+                    {"session_id": session_id}, {"_id": 0}
+                )
+                if latest and latest.get("status") == "paid":
+                    new_status = "paid"
+                    next_payment_status = "paid"
 
         return {
             "session_id": session_id,
             "status": new_status,
-            "payment_status": upstream_payment_status,
+            "payment_status": next_payment_status,
             "amount_total": amount_total,
             "currency": currency,
             "source": "upstream",
@@ -1143,26 +1152,31 @@ async def stripe_webhook(request: Request):
     if not txn:
         return {"received": True, "unknown_session": True}
 
-    if event.get("session_status") == "expired" and txn["status"] != "expired":
-        await db.payment_transactions.update_one(
-            {"session_id": session_id},
-            {"$set": {
-                "status": "expired",
-                "payment_status": event.get("payment_status"),
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }},
-        )
+    # Paid is terminal — never demote via expired / out-of-order events.
+    if txn["status"] == "paid":
         return {"received": True}
 
-    if event.get("payment_status") == "paid" and txn["status"] != "paid":
-        await db.payment_transactions.update_one(
-            {"session_id": session_id},
-            {"$set": {
-                "status": "paid",
-                "payment_status": "paid",
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            }},
-        )
+    new_status = stripe_service.resolve_local_payment_status(
+        txn["status"],
+        upstream_payment_status=event.get("payment_status"),
+        upstream_session_status=event.get("session_status"),
+    )
+
+    if new_status == txn["status"]:
+        return {"received": True}
+
+    result = await db.payment_transactions.update_one(
+        stripe_service.payment_status_update_filter(session_id, new_status),
+        {"$set": {
+            "status": new_status,
+            "payment_status": (
+                "paid" if new_status == "paid" else event.get("payment_status")
+            ),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+
+    if new_status == "paid" and result.matched_count:
         logger.info(f"Payment {session_id} marked paid via webhook")
 
         distinct_id = txn.get("initiated_by_user_id") or f"project-{txn.get('project_id')}"
