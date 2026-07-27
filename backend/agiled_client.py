@@ -133,7 +133,8 @@ async def delete_project(project_id: str) -> dict[str, Any]:
 _APP_TO_AGILED_STATUS = {
     "active": "active",
     "completed": "completed",
-    "on-hold": "planning",
+    # Must match Agiled's on_hold value — planning reads back as active.
+    "on-hold": "on_hold",
 }
 
 _AGILED_TO_APP_STATUS = {
