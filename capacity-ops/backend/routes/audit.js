@@ -7,6 +7,26 @@ const { sendAuditReportEmail } = require('../services/email');
 
 const router = express.Router();
 
+/**
+ * Build the leads upsert payload for an audit submission.
+ * Intentionally omits `status` so:
+ * - INSERT uses the DB default (`new`)
+ * - UPDATE on (email, website_url) conflict leaves pipeline status untouched
+ * Only sets project_name when the client sent one, so resubmits without a
+ * name do not null out an existing project_name.
+ */
+function buildLeadUpsertPayload({ email, websiteUrl, auditId, projectName }) {
+  const payload = {
+    email: String(email).trim().toLowerCase(),
+    website_url: websiteUrl,
+    audit_id: auditId,
+  };
+  if (projectName) {
+    payload.project_name = projectName;
+  }
+  return payload;
+}
+
 function siteUrl(req) {
   return (
     process.env.SITE_URL ||
@@ -60,18 +80,18 @@ router.post('/submit', async (req, res) => {
 
     if (auditErr) throw auditErr;
 
+    // Upsert by (email, website_url). Do NOT set status here: on insert the DB
+    // default is 'new'; on conflict, omitting status preserves contacted/
+    // converted/archived so a re-audit cannot wipe CRM pipeline progress.
+    const leadPayload = buildLeadUpsertPayload({
+      email,
+      websiteUrl: auditResult.url,
+      auditId: auditRow.id,
+      projectName,
+    });
     const { data: leadRow, error: leadErr } = await supabase
       .from('leads')
-      .upsert(
-        {
-          email: email.trim().toLowerCase(),
-          website_url: auditResult.url,
-          audit_id: auditRow.id,
-          project_name: projectName || null,
-          status: 'new',
-        },
-        { onConflict: 'email,website_url' }
-      )
+      .upsert(leadPayload, { onConflict: 'email,website_url' })
       .select()
       .single();
 
@@ -157,3 +177,4 @@ router.get('/share/:shareToken', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.buildLeadUpsertPayload = buildLeadUpsertPayload;
