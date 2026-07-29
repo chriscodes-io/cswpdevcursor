@@ -55,6 +55,15 @@ class UserLogin(BaseModel):
     email: str
     password: str
 
+    @field_validator('email')
+    @classmethod
+    def validate_email(cls, v):
+        if not v or '@' not in v:
+            raise ValueError('Invalid email format')
+        if len(v) > 255:
+            raise ValueError('Email is too long')
+        return v.lower().strip()
+
 
 class ForgotPasswordRequest(BaseModel):
     email: str
