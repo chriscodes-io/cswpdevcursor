@@ -4,21 +4,14 @@ const { runAudit } = require('../services/auditEngine');
 const { getSupabase, isConfigured: dbConfigured } = require('../services/supabase');
 const { generatePdfBuffer, renderTemplate } = require('../services/pdf');
 const { sendAuditReportEmail } = require('../services/email');
+const { requireDashboardAuth } = require('../middleware/dashboardAuth');
+const {
+  resolvePublicSiteUrl,
+  buildShareLink,
+  evaluateEmailDelivery,
+} = require('./auditHelpers');
 
 const router = express.Router();
-
-function siteUrl(req) {
-  return (
-    process.env.SITE_URL ||
-    (req.headers['x-forwarded-proto'] && req.headers.host
-      ? `${req.headers['x-forwarded-proto']}://${req.headers.host}`
-      : `http://localhost:${process.env.PORT || 3000}`)
-  );
-}
-
-function shareLink(req, shareToken) {
-  return `${siteUrl(req)}/audit/share/${shareToken}`;
-}
 
 router.post('/submit', async (req, res) => {
   try {
@@ -77,7 +70,7 @@ router.post('/submit', async (req, res) => {
 
     if (leadErr) throw leadErr;
 
-    const link = shareLink(req, shareToken);
+    const link = buildShareLink(resolvePublicSiteUrl(), shareToken);
     let pdfBuffer = null;
     try {
       pdfBuffer = await generatePdfBuffer({ ...auditRow, website_url: auditResult.url });
@@ -85,8 +78,9 @@ router.post('/submit', async (req, res) => {
       console.warn('[pdf] generation failed:', pdfErr.message);
     }
 
+    let emailResult;
     try {
-      await sendAuditReportEmail({
+      emailResult = await sendAuditReportEmail({
         to: email.trim(),
         url: auditResult.url,
         overallScore: auditResult.overall_score,
@@ -95,6 +89,21 @@ router.post('/submit', async (req, res) => {
       });
     } catch (mailErr) {
       console.error('[email] send failed:', mailErr.message);
+      return res.status(502).json({
+        success: false,
+        error: 'Audit saved but email delivery failed. Please try again in a moment.',
+        auditId: auditRow.id,
+      });
+    }
+
+    const delivery = evaluateEmailDelivery(emailResult);
+    if (!delivery.ok) {
+      console.error('[email] delivery not completed:', delivery.reason);
+      return res.status(503).json({
+        success: false,
+        error: 'Email delivery is not configured. Please try again later.',
+        auditId: auditRow.id,
+      });
     }
 
     return res.json({
@@ -102,6 +111,7 @@ router.post('/submit', async (req, res) => {
       auditId: auditRow.id,
       shareLink: link,
       shareToken,
+      emailSent: true,
       scores: {
         overall: auditResult.overall_score,
         performance: auditResult.performance,
@@ -117,24 +127,7 @@ router.post('/submit', async (req, res) => {
   }
 });
 
-router.get('/:auditId', async (req, res) => {
-  try {
-    if (!dbConfigured()) {
-      return res.status(503).json({ error: 'Database not configured' });
-    }
-    const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from('audits')
-      .select('*, leads(email, project_name, status)')
-      .eq('id', req.params.auditId)
-      .single();
-    if (error) return res.status(404).json({ error: 'Audit not found' });
-    return res.json(data);
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
+// Register /share before /:auditId so the public HTML report is never gated by dashboard auth.
 router.get('/share/:shareToken', async (req, res) => {
   try {
     if (!dbConfigured()) {
@@ -153,6 +146,24 @@ router.get('/share/:shareToken', async (req, res) => {
     return res.send(html);
   } catch (err) {
     return res.status(500).send(err.message);
+  }
+});
+
+router.get('/:auditId', requireDashboardAuth, async (req, res) => {
+  try {
+    if (!dbConfigured()) {
+      return res.status(503).json({ error: 'Database not configured' });
+    }
+    const supabase = getSupabase();
+    const { data, error } = await supabase
+      .from('audits')
+      .select('*, leads(email, project_name, status)')
+      .eq('id', req.params.auditId)
+      .single();
+    if (error) return res.status(404).json({ error: 'Audit not found' });
+    return res.json(data);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 });
 
