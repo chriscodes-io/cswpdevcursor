@@ -19,7 +19,7 @@ async function sendAuditReportEmail({ to, url, overallScore, shareLink, pdfBuffe
     <p>Your WordPress health audit for <strong>${escapeHtml(url)}</strong> is ready.</p>
     <p><strong>Overall score: ${overallScore}/100</strong></p>
     <p>Your full PDF report is attached. You can also view results online:</p>
-    <p><a href="${shareLink}">${shareLink}</a></p>
+    <p><a href="${escapeHtml(shareLink)}">${escapeHtml(shareLink)}</a></p>
     <p>— Chris Smith, Technical SEO</p>
   `;
 
