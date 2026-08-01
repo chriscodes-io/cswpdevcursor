@@ -501,18 +501,22 @@ async def update_project(project_id: str, project_data: ProjectUpdate, current_u
 
     if _use_agiled_crm() and agiled_client.is_configured():
         existing_meta = await project_meta.get_meta(project_id) or {"client_id": "", "type": "seo"}
+
+        # Agiled first, then local meta. Saving meta before the Agiled write left
+        # client_id/type diverged when Agiled failed — the UI reported failure but
+        # subsequent reads already showed the new client/type assignment.
+        agiled_payload = project_update_to_agiled(update_data)
+        try:
+            result = await agiled_client.update_project(project_id, agiled_payload) if agiled_payload else await agiled_client.get_project(project_id)
+        except AgiledError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+
         if "client_id" in update_data or "type" in update_data:
             await project_meta.save_meta(
                 project_id,
                 update_data.get("client_id", existing_meta.get("client_id", "")),
                 update_data.get("type", existing_meta.get("type", "seo")),
             )
-
-        agiled_payload = project_update_to_agiled(update_data)
-        try:
-            result = await agiled_client.update_project(project_id, agiled_payload) if agiled_payload else await agiled_client.get_project(project_id)
-        except AgiledError as exc:
-            raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
         agiled_project = result.get("data") or result
         meta = await project_meta.get_meta(project_id)
