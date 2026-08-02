@@ -13,13 +13,25 @@ JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
 
 
+_BCRYPT_MAX_PASSWORD_BYTES = 72
+
+
 def hash_password(password: str) -> str:
+    password_bytes = password.encode("utf-8")
+    # bcrypt 4.x silently truncates past 72 bytes; refuse instead of weakening.
+    if len(password_bytes) > _BCRYPT_MAX_PASSWORD_BYTES:
+        raise ValueError(
+            f"Password cannot be longer than {_BCRYPT_MAX_PASSWORD_BYTES} bytes"
+        )
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+    return bcrypt.hashpw(password_bytes, salt).decode("utf-8")
 
 
 def verify_password(password: str, hashed: str) -> bool:
-    return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
+    password_bytes = password.encode("utf-8")
+    if len(password_bytes) > _BCRYPT_MAX_PASSWORD_BYTES:
+        return False
+    return bcrypt.checkpw(password_bytes, hashed.encode("utf-8"))
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

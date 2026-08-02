@@ -46,8 +46,9 @@ class UserCreate(BaseModel):
     def validate_password(cls, v):
         if not v or len(v) < 6:
             raise ValueError('Password must be at least 6 characters')
-        if len(v) > 1000:
-            raise ValueError('Password is too long')
+        # bcrypt only uses the first 72 bytes; longer values were silently truncated.
+        if len(v.encode('utf-8')) > 72:
+            raise ValueError('Password is too long (max 72 bytes)')
         return v
 
 
@@ -76,8 +77,8 @@ class ResetPasswordRequest(BaseModel):
     def validate_password(cls, v):
         if not v or len(v) < 6:
             raise ValueError('Password must be at least 6 characters')
-        if len(v) > 1000:
-            raise ValueError('Password is too long')
+        if len(v.encode('utf-8')) > 72:
+            raise ValueError('Password is too long (max 72 bytes)')
         return v
 
 
