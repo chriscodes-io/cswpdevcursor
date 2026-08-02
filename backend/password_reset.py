@@ -70,7 +70,27 @@ async def save_reset_token(user_id: str, email: str, token: str) -> None:
     raise RuntimeError("No storage available for password reset tokens")
 
 
-async def consume_reset_token(token: str) -> Optional[dict[str, str]]:
+def _parse_expires_at(value: Any) -> Optional[datetime]:
+    """Normalize Mongo BSON datetimes and ISO strings to aware UTC datetimes."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+    if isinstance(value, str):
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+    return None
+
+
+async def get_reset_token_context(token: str) -> Optional[dict[str, str]]:
+    """Return user context for a valid unused token without consuming it."""
     token_hash = _hash_token(token)
     now = _now()
 
@@ -82,31 +102,56 @@ async def consume_reset_token(token: str) -> Optional[dict[str, str]]:
         if not doc:
             return None
 
-        expires_at = datetime.fromisoformat(doc["expires_at"].replace("Z", "+00:00"))
-        if expires_at < now:
+        expires_at = _parse_expires_at(doc.get("expires_at"))
+        if expires_at is None or expires_at < now:
             return None
 
-        await db.password_reset_tokens.update_one(
-            {"token_hash": token_hash},
+        return {"user_id": doc["user_id"], "email": doc["email"]}
+
+    if dev_auth.is_enabled():
+        for entry in _load_dev_tokens():
+            if entry.get("token_hash") != token_hash or entry.get("used"):
+                continue
+
+            expires_at = _parse_expires_at(entry.get("expires_at"))
+            if expires_at is None or expires_at < now:
+                return None
+
+            return {"user_id": entry["user_id"], "email": entry["email"]}
+
+    return None
+
+
+async def mark_reset_token_used(token: str) -> bool:
+    """Mark a reset token used. Returns True when this call consumed it."""
+    token_hash = _hash_token(token)
+
+    if await ping_db():
+        result = await db.password_reset_tokens.update_one(
+            {"token_hash": token_hash, "used": False},
             {"$set": {"used": True}},
         )
-        return {"user_id": doc["user_id"], "email": doc["email"]}
+        return result.modified_count > 0
 
     if dev_auth.is_enabled():
         tokens = _load_dev_tokens()
         for index, entry in enumerate(tokens):
             if entry.get("token_hash") != token_hash or entry.get("used"):
                 continue
-
-            expires_at = datetime.fromisoformat(entry["expires_at"].replace("Z", "+00:00"))
-            if expires_at < now:
-                return None
-
             tokens[index]["used"] = True
             _save_dev_tokens(tokens)
-            return {"user_id": entry["user_id"], "email": entry["email"]}
+            return True
 
-    return None
+    return False
+
+
+async def consume_reset_token(token: str) -> Optional[dict[str, str]]:
+    """Validate and mark a reset token used in one step (legacy helper)."""
+    context = await get_reset_token_context(token)
+    if not context:
+        return None
+    await mark_reset_token_used(token)
+    return context
 
 
 async def update_user_password(user_id: str, email: str, new_password: str) -> bool:

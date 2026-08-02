@@ -236,8 +236,13 @@ async def forgot_password(body: ForgotPasswordRequest):
 
 @api_router.post("/auth/reset-password")
 async def reset_password(body: ResetPasswordRequest):
-    """Set a new password using a valid reset token."""
-    context = await password_reset.consume_reset_token(body.token)
+    """Set a new password using a valid reset token.
+
+    Validate the token first, write the password, then mark the token used.
+    Consuming before a successful write burns the one-time link while leaving
+    the old password in place (e.g. missing user row or storage blip).
+    """
+    context = await password_reset.get_reset_token_context(body.token)
     if not context:
         raise HTTPException(status_code=400, detail="Invalid or expired reset link")
 
@@ -249,6 +254,7 @@ async def reset_password(body: ResetPasswordRequest):
     if not updated:
         raise HTTPException(status_code=404, detail="User not found")
 
+    await password_reset.mark_reset_token_used(body.token)
     return {"message": "Password updated successfully. You can sign in now."}
 
 
