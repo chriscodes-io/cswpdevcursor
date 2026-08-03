@@ -213,7 +213,9 @@ async def logout():
 
 @api_router.post("/auth/forgot-password")
 async def forgot_password(body: ForgotPasswordRequest):
-    """Request a password reset email. Always returns the same message."""
+    """Request a password reset email. Always returns the same message when the
+    account is missing (anti-enumeration). When an account exists, delivery
+    failure is surfaced — a silent success here locks staff out of recovery."""
     message = "If an account exists for that email, you will receive reset instructions shortly."
 
     user = await _lookup_user_by_email(body.email)
@@ -226,12 +228,23 @@ async def forgot_password(body: ForgotPasswordRequest):
     frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000").rstrip("/")
     reset_url = f"{frontend_url}/auth/reset?token={token}"
 
-    await send_password_reset(user.get("name", ""), user["email"], reset_url)
+    # Local/dev without Resend: surface the reset link instead of pretending mail was sent.
+    if not email_is_configured():
+        if dev_auth.is_enabled():
+            return {"message": message, "dev_reset_url": reset_url}
+        raise HTTPException(
+            status_code=503,
+            detail="Email delivery is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL.",
+        )
 
-    response = {"message": message}
-    if not email_is_configured() and dev_auth.is_enabled():
-        response["dev_reset_url"] = reset_url
-    return response
+    sent = await send_password_reset(user.get("name", ""), user["email"], reset_url)
+    if not sent:
+        raise HTTPException(
+            status_code=502,
+            detail="Failed to send reset email. Please try again shortly.",
+        )
+
+    return {"message": message}
 
 
 @api_router.post("/auth/reset-password")
