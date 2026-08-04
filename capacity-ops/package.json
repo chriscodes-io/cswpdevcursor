@@ -20,6 +20,6 @@
     "puppeteer-core": "^23.11.1",
     "resend": "^4.1.2",
     "serverless-http": "^3.2.0",
-    "uuid": "^11.0.5"
+    "uuid": "^14.0.0"
   }
 }
