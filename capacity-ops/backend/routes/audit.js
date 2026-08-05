@@ -135,7 +135,16 @@ router.get('/:auditId', async (req, res) => {
   }
 });
 
-router.get('/share/:shareToken', async (req, res) => {
+/**
+ * Public HTML report. Mounted at both:
+ * - GET /api/audit/share/:shareToken (API path)
+ * - GET /audit/share/:shareToken (vanity URL used in emails)
+ *
+ * Netlify 200-rewrites to functions preserve the *original* request path in
+ * event.path, so vanity /audit/share/:token must be registered on Express —
+ * rewriting to /.netlify/functions/api/audit/share/:token alone is not enough.
+ */
+async function serveSharedAudit(req, res) {
   try {
     if (!dbConfigured()) {
       return res.status(503).send('Database not configured');
@@ -154,6 +163,9 @@ router.get('/share/:shareToken', async (req, res) => {
   } catch (err) {
     return res.status(500).send(err.message);
   }
-});
+}
+
+router.get('/share/:shareToken', serveSharedAudit);
 
 module.exports = router;
+module.exports.serveSharedAudit = serveSharedAudit;

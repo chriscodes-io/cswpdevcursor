@@ -28,7 +28,10 @@ export const config = {
   openaiModel: optionalEnv('OPENAI_MODEL', 'gpt-4o-mini'),
   gmailLeadsLabel: optionalEnv('GMAIL_LEADS_LABEL', 'Leads'),
   gmailLookbackHours: optionalInt('GMAIL_LOOKBACK_HOURS', 24),
-  gmailMaxMessages: optionalInt('GMAIL_MAX_MESSAGES', 25),
+  /** Gmail list page size (1–500). All pages in the lookback window are fetched. */
+  gmailMaxMessages: optionalInt('GMAIL_MAX_MESSAGES', 100),
+  /** Hard cap across pages so a mislabelled flood cannot unbounded-fetch. */
+  gmailMaxTotalMessages: optionalInt('GMAIL_MAX_TOTAL_MESSAGES', 500),
   qualificationThreshold: optionalInt('QUALIFICATION_THRESHOLD', 7),
   hubspotPortalId: optionalEnv('HUBSPOT_PORTAL_ID', ''),
   slackChannel: optionalEnv('SLACK_CHANNEL', '#sales-leads'),

@@ -35,6 +35,8 @@ cp .env.example .env
 | `OPENAI_API_KEY` | OpenAI API key |
 | `HUBSPOT_PORTAL_ID` | HubSpot portal ID (for contact URLs in Slack) |
 | `SLACK_CHANNEL` | Channel ID or name (e.g. `#sales-leads`) |
+| `GMAIL_MAX_MESSAGES` | Gmail list page size (default `100`, max `500`) |
+| `GMAIL_MAX_TOTAL_MESSAGES` | Hard cap across pages (default `500`) |
 
 Connection keys are shown when you run Pica MCP: *“What connections do I have in Pica?”*
 
@@ -58,7 +60,7 @@ Equivalent prompt for an LLM with Pica MCP:
 
 ## Workflow
 
-1. **fetchLeadEmails** — Gmail messages with `label:Leads` and `newer_than:24h`
+1. **fetchLeadEmails** — Gmail messages with `label:Leads` and `newer_than:24h` (paginated via `pageToken`)
 2. **extractAndQualifyLead** — OpenAI extracts fields + scores 1–10
 3. If score ≥ threshold and not spam:
    - **findContactByEmail** / **createHubSpotContact**

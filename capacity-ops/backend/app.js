@@ -22,6 +22,10 @@ function createApp() {
   app.use('/api/audit', auditRoutes);
   app.use('/api/leads', leadsRoutes);
 
+  // Vanity share URLs used in email/dashboard links. Required on Netlify because
+  // function rewrites keep the browser path (/audit/share/...) as event.path.
+  app.get('/audit/share/:shareToken', auditRoutes.serveSharedAudit);
+
   const publicDir = path.join(__dirname, '../public');
   app.use(express.static(publicDir));
 

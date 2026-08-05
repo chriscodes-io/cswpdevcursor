@@ -251,8 +251,8 @@ def contact_to_client(contact: dict[str, Any]) -> dict[str, Any]:
 
 
 def client_create_to_contact(body: dict[str, Any]) -> dict[str, Any]:
-    """Map ClientCreate payload to Agiled contact fields."""
-    name = body.get("name", "").strip()
+    """Map ClientCreate/ClientUpdate payload to Agiled contact fields."""
+    name = (body.get("name") or "").strip()
     parts = name.split(None, 1)
     payload: dict[str, Any] = {
         "email": body.get("email"),
@@ -261,11 +261,16 @@ def client_create_to_contact(body: dict[str, Any]) -> dict[str, Any]:
         "website": body.get("website"),
         "notes": body.get("notes"),
     }
-    if len(parts) == 2:
-        payload["first_name"] = parts[0]
-        payload["last_name"] = parts[1]
-    else:
-        payload["first_name"] = name
+    if "status" in body and body["status"] is not None:
+        # App allows active|inactive|archived; Agiled contact status is active/inactive.
+        status = str(body["status"]).strip().lower()
+        payload["status"] = "inactive" if status in ("inactive", "archived") else "active"
+    if name:
+        if len(parts) == 2:
+            payload["first_name"] = parts[0]
+            payload["last_name"] = parts[1]
+        else:
+            payload["first_name"] = name
     return {key: value for key, value in payload.items() if value not in (None, "")}
 
 

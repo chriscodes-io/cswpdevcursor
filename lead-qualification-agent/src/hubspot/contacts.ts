@@ -33,7 +33,9 @@ export async function findContactByEmail(email: string): Promise<string | null> 
   const body = {
     limit: 1,
     after: '0',
-    sorts: ['createdAt'],
+    // HubSpot search sorts use internal property names (createdate), not response
+    // metadata fields (createdAt). Wrong names can 400 the whole contact lookup.
+    sorts: ['createdate'],
     properties: ['email', 'firstname', 'lastname'],
     filterGroups: [
       {
