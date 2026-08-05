@@ -18,6 +18,8 @@ export type LeadEmail = {
 
 type GmailListResponse = {
   messages?: Array<{ id: string; threadId?: string }>;
+  nextPageToken?: string;
+  resultSizeEstimate?: number;
 };
 
 type GmailMessageResponse = {
@@ -36,28 +38,58 @@ type GmailMessageResponse = {
   };
 };
 
-export async function fetchLeadEmails(): Promise<LeadEmail[]> {
+type GmailMessageRef = { id: string; threadId?: string };
+
+/**
+ * List every Gmail message matching the Leads label + lookback window.
+ * Previously only the first page (default maxResults=25) was fetched with no
+ * pageToken loop, so older leads in a busy window were silently dropped.
+ */
+export async function listLeadMessageRefs(): Promise<GmailMessageRef[]> {
   const label = config.gmailLeadsLabel;
   const hours = config.gmailLookbackHours;
-  const maxResults = config.gmailMaxMessages;
-
+  const pageSize = Math.min(Math.max(config.gmailMaxMessages, 1), 500);
+  const hardCap = Math.max(config.gmailMaxTotalMessages, pageSize);
   const q = `label:${label} newer_than:${hours}h`;
 
-  const listResult = await withRetry(() =>
-    picaRequest<GmailListResponse>(
-      '/gmail/v1/users/me/messages',
-      PICA_ACTIONS.gmail.listMessages,
-      config.gmailConnectionKey(),
-      {
-        queryParams: {
-          maxResults,
-          q,
-        },
-      }
-    )
-  );
+  const refs: GmailMessageRef[] = [];
+  let pageToken: string | undefined;
 
-  const refs = listResult.messages || [];
+  do {
+    const queryParams: Record<string, string | number> = {
+      maxResults: pageSize,
+      q,
+    };
+    if (pageToken) queryParams.pageToken = pageToken;
+
+    const listResult = await withRetry(() =>
+      picaRequest<GmailListResponse>(
+        '/gmail/v1/users/me/messages',
+        PICA_ACTIONS.gmail.listMessages,
+        config.gmailConnectionKey(),
+        { queryParams }
+      )
+    );
+
+    const page = listResult.messages || [];
+    refs.push(...page);
+    pageToken = listResult.nextPageToken || undefined;
+
+    if (refs.length >= hardCap) {
+      if (pageToken) {
+        console.warn(
+          `Gmail list hit GMAIL_MAX_TOTAL_MESSAGES=${hardCap}; remaining pages skipped.`
+        );
+      }
+      return refs.slice(0, hardCap);
+    }
+  } while (pageToken);
+
+  return refs;
+}
+
+export async function fetchLeadEmails(): Promise<LeadEmail[]> {
+  const refs = await listLeadMessageRefs();
   if (refs.length === 0) {
     return [];
   }
