@@ -403,6 +403,34 @@ async def get_projects(client_id: Optional[str] = None, skip: int = 0, limit: in
     skip, limit = _normalize_pagination(skip, limit)
 
     if _use_agiled_crm() and agiled_client.is_configured():
+        # client_id lives in local project_meta, not as a reliable Agiled list
+        # filter. Resolve IDs from meta first so pagination cannot silently omit
+        # a client's projects that fall outside the current Agiled page.
+        if client_id:
+            try:
+                linked_ids = await project_meta.list_ids_for_client(client_id)
+            except RuntimeError as exc:
+                raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+            page_ids = linked_ids[skip : skip + limit]
+            try:
+                meta_map = await project_meta.get_meta_map(page_ids)
+            except RuntimeError as exc:
+                raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+            projects = []
+            for project_id in page_ids:
+                try:
+                    result = await agiled_client.get_project(project_id)
+                except AgiledError as exc:
+                    if exc.status_code == 404:
+                        continue
+                    raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
+                agiled_project = result.get("data") or result
+                mapped = project_to_app(agiled_project, meta_map.get(project_id))
+                projects.append(_parse_project_datetimes(mapped))
+            return projects
+
         page = (skip // limit) + 1
         try:
             result = await agiled_client.list_projects(page=page, per_page=limit)
@@ -411,14 +439,15 @@ async def get_projects(client_id: Optional[str] = None, skip: int = 0, limit: in
 
         agiled_projects = result.get("data") or []
         project_ids = [str(project.get("id")) for project in agiled_projects if project.get("id")]
-        meta_map = await project_meta.get_meta_map(project_ids)
+        try:
+            meta_map = await project_meta.get_meta_map(project_ids)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
         projects = []
         for agiled_project in agiled_projects:
             project_id = str(agiled_project.get("id"))
             mapped = project_to_app(agiled_project, meta_map.get(project_id))
-            if client_id and mapped.get("client_id") != client_id:
-                continue
             projects.append(_parse_project_datetimes(mapped))
         return projects
 
@@ -443,7 +472,10 @@ async def create_project(project_data: ProjectCreate, current_user: dict = Depen
 
         agiled_project = result.get("data") or result
         project_id = str(agiled_project.get("id"))
-        await project_meta.save_meta(project_id, project_data.client_id, project_data.type)
+        try:
+            await project_meta.save_meta(project_id, project_data.client_id, project_data.type)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
         mapped = project_to_app(
             agiled_project,
             {"client_id": project_data.client_id, "type": project_data.type},
@@ -478,7 +510,10 @@ async def get_project(project_id: str, current_user: dict = Depends(get_current_
             raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
         agiled_project = result.get("data") or result
-        meta = await project_meta.get_meta(project_id)
+        try:
+            meta = await project_meta.get_meta(project_id)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
         mapped = project_to_app(agiled_project, meta)
         return _parse_project_datetimes(mapped)
 
@@ -500,13 +535,16 @@ async def update_project(project_id: str, project_data: ProjectUpdate, current_u
         raise HTTPException(status_code=400, detail="No data to update")
 
     if _use_agiled_crm() and agiled_client.is_configured():
-        existing_meta = await project_meta.get_meta(project_id) or {"client_id": "", "type": "seo"}
-        if "client_id" in update_data or "type" in update_data:
-            await project_meta.save_meta(
-                project_id,
-                update_data.get("client_id", existing_meta.get("client_id", "")),
-                update_data.get("type", existing_meta.get("type", "seo")),
-            )
+        try:
+            existing_meta = await project_meta.get_meta(project_id) or {"client_id": "", "type": "seo"}
+            if "client_id" in update_data or "type" in update_data:
+                await project_meta.save_meta(
+                    project_id,
+                    update_data.get("client_id", existing_meta.get("client_id", "")),
+                    update_data.get("type", existing_meta.get("type", "seo")),
+                )
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
 
         agiled_payload = project_update_to_agiled(update_data)
         try:
@@ -515,7 +553,10 @@ async def update_project(project_id: str, project_data: ProjectUpdate, current_u
             raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 
         agiled_project = result.get("data") or result
-        meta = await project_meta.get_meta(project_id)
+        try:
+            meta = await project_meta.get_meta(project_id)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
         mapped = project_to_app(agiled_project, meta)
         return _parse_project_datetimes(mapped)
 
@@ -543,7 +584,10 @@ async def delete_project(project_id: str, current_user: dict = Depends(get_curre
             await agiled_client.delete_project(project_id)
         except AgiledError as exc:
             raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
-        await project_meta.delete_meta(project_id)
+        try:
+            await project_meta.delete_meta(project_id)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=503, detail=str(exc)) from exc
         return {"message": "Project deleted successfully"}
 
     result = await db.projects.delete_one({"id": project_id})
