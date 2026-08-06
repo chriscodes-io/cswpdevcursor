@@ -249,6 +249,12 @@ async def reset_password(body: ResetPasswordRequest):
     if not updated:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # Burn any sibling reset links so a prior unused email cannot take over again.
+    try:
+        await password_reset.invalidate_user_tokens(context["user_id"], context["email"])
+    except Exception as invalidate_err:
+        logger.warning("Failed to invalidate sibling reset tokens: %s", invalidate_err)
+
     return {"message": "Password updated successfully. You can sign in now."}
 
 
@@ -711,6 +717,37 @@ def _user_id_from_auth(current_user: dict) -> Optional[str]:
     return current_user.get("sub") or current_user.get("user_id")
 
 
+async def _resolve_audit_client_recipient(project_id: str) -> Optional[dict]:
+    """Resolve the project client's name/email for audit-ready notification.
+
+    Production defaults to Agiled CRM: client_id lives in project_meta and the
+    contact itself is in Agiled — not Mongo db.projects / db.clients.
+    """
+    if _use_agiled_crm() and agiled_client.is_configured():
+        meta = await project_meta.get_meta(project_id) or {}
+        client_id = meta.get("client_id") or ""
+        if not client_id:
+            return None
+        result = await agiled_client.get_contact(client_id)
+        contact = result.get("data") or result
+        mapped = contact_to_client(contact)
+        email = (mapped.get("email") or "").strip()
+        if not email:
+            return None
+        return {"name": mapped.get("name") or "", "email": email}
+
+    project = await db.projects.find_one({"id": project_id}, {"_id": 0})
+    if not project or not project.get("client_id"):
+        return None
+    client_doc = await db.clients.find_one({"id": project["client_id"]}, {"_id": 0})
+    if not client_doc or not client_doc.get("email"):
+        return None
+    return {
+        "name": client_doc.get("name") or "",
+        "email": client_doc["email"],
+    }
+
+
 @api_router.post("/seo-audit", response_model=SEOAudit)
 async def run_seo_audit(audit_request: SEOAuditRequest, current_user: dict = Depends(get_current_user)):
     """Run a comprehensive WordPress health audit"""
@@ -862,16 +899,14 @@ async def run_seo_audit(audit_request: SEOAuditRequest, current_user: dict = Dep
 
         # Fire-and-forget "audit ready" email to the project's client, if any
         try:
-            project = await db.projects.find_one({"id": audit_request.project_id}, {"_id": 0})
-            if project and project.get("client_id"):
-                client_doc = await db.clients.find_one({"id": project["client_id"]}, {"_id": 0})
-                if client_doc and client_doc.get("email"):
-                    asyncio.create_task(send_audit_ready(
-                        client_name=client_doc.get("name") or "",
-                        client_email=client_doc["email"],
-                        site_url=url,
-                        overall_score=overall_score,
-                    ))
+            recipient = await _resolve_audit_client_recipient(audit_request.project_id)
+            if recipient:
+                asyncio.create_task(send_audit_ready(
+                    client_name=recipient["name"],
+                    client_email=recipient["email"],
+                    site_url=url,
+                    overall_score=overall_score,
+                ))
         except Exception as notify_err:
             logger.warning(f"audit-ready notification skipped: {notify_err}")
 

@@ -45,6 +45,33 @@ def _save_dev_tokens(tokens: list[dict[str, Any]]) -> None:
         json.dump(tokens, handle, indent=2)
 
 
+async def invalidate_user_tokens(user_id: str, email: str) -> None:
+    """Mark every unused reset token for this user as used (Mongo or dev file)."""
+    normalized_email = email.lower().strip()
+
+    if await ping_db():
+        await db.password_reset_tokens.update_many(
+            {
+                "used": False,
+                "$or": [{"user_id": user_id}, {"email": normalized_email}],
+            },
+            {"$set": {"used": True}},
+        )
+        return
+
+    if dev_auth.is_enabled():
+        tokens = _load_dev_tokens()
+        changed = False
+        for entry in tokens:
+            if entry.get("used"):
+                continue
+            if entry.get("user_id") == user_id or entry.get("email") == normalized_email:
+                entry["used"] = True
+                changed = True
+        if changed:
+            _save_dev_tokens(tokens)
+
+
 async def save_reset_token(user_id: str, email: str, token: str) -> None:
     token_hash = _hash_token(token)
     expires_at = _now() + timedelta(hours=_TOKEN_TTL_HOURS)
@@ -57,6 +84,14 @@ async def save_reset_token(user_id: str, email: str, token: str) -> None:
     }
 
     if await ping_db():
+        # Invalidate prior unused tokens so only the newest link works.
+        await db.password_reset_tokens.update_many(
+            {
+                "used": False,
+                "$or": [{"user_id": user_id}, {"email": record["email"]}],
+            },
+            {"$set": {"used": True}},
+        )
         mongo_record = {**record, "expires_at": expires_at}
         await db.password_reset_tokens.insert_one(mongo_record)
         return
