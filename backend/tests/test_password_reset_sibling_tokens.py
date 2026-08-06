@@ -85,6 +85,11 @@ class FakeResetTokenCollection:
         return SimpleNamespace(inserted_id="new")
 
 
+def _iso_expiry(hours: float = 1) -> str:
+    """ISO expiry strings avoid the separate Mongo datetime parse bug (draft PR #19)."""
+    return (datetime.now(timezone.utc) + timedelta(hours=hours)).isoformat()
+
+
 @pytest.mark.asyncio
 async def test_save_reset_token_invalidates_prior_mongo_tokens(monkeypatch):
     old_hash = password_reset._hash_token("old-token")
@@ -94,7 +99,7 @@ async def test_save_reset_token_invalidates_prior_mongo_tokens(monkeypatch):
                 "token_hash": old_hash,
                 "user_id": "user-1",
                 "email": "staff@example.com",
-                "expires_at": datetime.now(timezone.utc) + timedelta(hours=1),
+                "expires_at": _iso_expiry(),
                 "used": False,
             }
         ]
