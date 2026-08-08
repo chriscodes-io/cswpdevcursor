@@ -19,6 +19,31 @@ export type HubSpotContactResult = {
   url: string;
 };
 
+/**
+ * Decide whether a HubSpot create attempt produced a usable contact id.
+ * Create is not idempotent — never blindly retry POST /contacts. On ambiguous
+ * failure, callers must re-search by email and treat a found contact as success.
+ */
+export function reconcileHubSpotCreateAttempt(input: {
+  createdId: string | null | undefined;
+  createError: unknown | null;
+  recoveredId: string | null;
+}): { ok: true; contactId: string; isNew: boolean } | { ok: false; error: unknown } {
+  if (!input.createError && input.createdId) {
+    return { ok: true, contactId: input.createdId, isNew: true };
+  }
+  if (input.recoveredId) {
+    // Contact exists after a failed/ambiguous create — do not POST again.
+    return { ok: true, contactId: input.recoveredId, isNew: false };
+  }
+  return {
+    ok: false,
+    error:
+      input.createError ??
+      new Error('HubSpot create returned no contact id'),
+  };
+}
+
 function hubspotContactUrl(contactId: string): string {
   const portalId = config.hubspotPortalId;
   if (portalId) {
@@ -48,6 +73,7 @@ export async function findContactByEmail(email: string): Promise<string | null> 
     ],
   };
 
+  // Search is idempotent — safe to retry on transient transport errors.
   const result = await withRetry(() =>
     picaRequest<HubSpotSearchResponse>(
       '/crm/v3/objects/contacts/search',
@@ -112,18 +138,41 @@ export async function upsertQualifiedContact(
     properties,
   };
 
-  const created = await withRetry(() =>
-    picaRequest<HubSpotCreateResponse>(
+  // At-most-once: HubSpot contact create has no idempotency key. Retrying after
+  // timeout/5xx can (and does) create duplicate contacts for the same email.
+  let createdId: string | null | undefined;
+  let createError: unknown | null = null;
+  try {
+    const created = await picaRequest<HubSpotCreateResponse>(
       '/crm/v3/objects/contacts',
       PICA_ACTIONS.hubspot.createContact,
       config.hubspotConnectionKey(),
       { method: 'POST', body: createBody }
-    )
-  );
+    );
+    createdId = created.id;
+  } catch (err) {
+    createError = err;
+  }
+
+  let recoveredId: string | null = null;
+  if (createError || !createdId) {
+    recoveredId = await findContactByEmail(email);
+  }
+
+  const reconciled = reconcileHubSpotCreateAttempt({
+    createdId,
+    createError,
+    recoveredId,
+  });
+  if (!reconciled.ok) {
+    throw reconciled.error instanceof Error
+      ? reconciled.error
+      : new Error(String(reconciled.error));
+  }
 
   return {
-    contactId: created.id,
-    isNew: true,
-    url: hubspotContactUrl(created.id),
+    contactId: reconciled.contactId,
+    isNew: reconciled.isNew,
+    url: hubspotContactUrl(reconciled.contactId),
   };
 }

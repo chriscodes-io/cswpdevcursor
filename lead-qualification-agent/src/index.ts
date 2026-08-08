@@ -22,6 +22,12 @@ async function main() {
   console.log(`Unqualified: ${unqualified}`);
   console.log(`Skipped:     ${skipped}`);
   console.log(`Errors:      ${errors}`);
+
+  // Cron/monitoring treats exit 0 as success. Per-lead HubSpot/Slack failures
+  // used to exit 0, so a fully-failed run looked healthy and leads stayed lost.
+  if (errors > 0) {
+    process.exitCode = 1;
+  }
 }
 
 main().catch((err) => {
