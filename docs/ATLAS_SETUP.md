@@ -134,6 +134,71 @@ backend/.venv/bin/python scripts/create-staff-user.py \
 - Phase 2: deploy React app to Vercel at `app.cswp.dev` with `REACT_APP_BACKEND_URL=https://api.cswp.dev`.
 - Stripe webhook: `https://api.cswp.dev/api/webhook/stripe`.
 
+## 7. Phase 1 API operating runbook
+
+Phase 1 runs the FastAPI backend as a staff-only API. The backend must start from the `backend/` service root and serve `main:app`; `backend/main.py` adds the repo root to `sys.path` and imports `backend.server:app` for Railway/Render.
+
+### Expected production auth state
+
+| Layer | Setting | Expected production value | Why |
+|------|---------|---------------------------|-----|
+| Backend | `DEV_AUTH_FALLBACK` | `false` | Disables file-backed local users in `backend/data/` |
+| Backend | `ALLOW_PUBLIC_REGISTRATION` | `false` | Makes `POST /api/auth/register` return 403 |
+| Frontend build | `REACT_APP_ALLOW_SIGNUP` | `false` | Hides the signup UI for `app.cswp.dev` |
+| Frontend build | `REACT_APP_BACKEND_URL` | `https://api.cswp.dev` | Sends dashboard API calls to the deployed backend |
+
+The backend remains the source of truth: even if a stale frontend build shows signup, production registration is still blocked when `ALLOW_PUBLIC_REGISTRATION=false`.
+
+### Health checks
+
+Use the smoke test after every deploy or env change:
+
+```bash
+./deploy/verify-api.sh https://api.cswp.dev
+```
+
+The script verifies:
+
+1. `GET /health` responds.
+2. `mongodb` is `true`.
+3. `dev_auth_fallback` is `false`.
+4. `allow_public_registration` is `false`.
+5. `POST /api/auth/register` returns `403`.
+
+`GET /health` also reports optional integrations:
+
+| Field | Meaning |
+|-------|---------|
+| `agiled_configured` | `AGILED_API_KEY` is available to the backend |
+| `email_configured` | `RESEND_API_KEY` and `RESEND_FROM_EMAIL` are set |
+| `stripe_configured` | Stripe API configuration is present |
+
+### Staff account operations
+
+Create staff accounts from a trusted machine with `backend/.env.local` pointing at the production Atlas database:
+
+```bash
+backend/.venv/bin/python scripts/create-staff-user.py \
+  --email you@chrissmithwp.com \
+  --name "Chris Smith"
+```
+
+The script prompts for a password when `--password` is omitted, rejects passwords shorter than 6 characters, and exits without changing anything if the email already exists.
+
+Password resets use `/api/auth/forgot-password` and `/api/auth/reset-password`. Reset tokens are hashed before storage, expire after 1 hour by default, and require Resend to deliver emails in production.
+
+## 8. Troubleshooting
+
+| Symptom | Likely cause | Check / fix |
+|---------|--------------|-------------|
+| `/health` returns `"mongodb": false` with `"status": "degraded"` | Atlas is unreachable from the host | Verify `MONGO_URL`, Atlas database credentials, and Atlas Network Access allowlist. Railway/Render often need `0.0.0.0/0` unless stricter networking is configured. |
+| `/health` returns `"dev_auth_fallback": true` in production | Production env did not override the local default | Set `DEV_AUTH_FALLBACK=false` in the host env and redeploy. Do not rely on `backend/.env` for production. |
+| `/health` returns `"allow_public_registration": true` | Staff-only registration is not enforced | Set `ALLOW_PUBLIC_REGISTRATION=false` and rerun `./deploy/verify-api.sh`. |
+| Signup link still appears on `app.cswp.dev` | Frontend was built with signup enabled | Set `REACT_APP_ALLOW_SIGNUP=false` in the frontend host build env and rebuild the frontend. |
+| Browser blocks dashboard API calls with CORS errors | Frontend origin is missing from backend CORS config | Include the exact origin in `CORS_ORIGINS`, for example `https://app.cswp.dev,https://chrissmithwp.com`. |
+| Password reset request succeeds but no email arrives | Resend is not configured or the sender is not verified | Check `/health` for `"email_configured": true`, then verify `RESEND_API_KEY` and `RESEND_FROM_EMAIL`. |
+| Staff creation script cannot connect | Local shell is not loading Atlas env values | Copy `backend/.env.local.example` to `backend/.env.local`, fill `MONGO_URL`, and rerun the script from the repo root. |
+
 ## Data layout
 
 | Data | Store |
