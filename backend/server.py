@@ -631,6 +631,25 @@ async def delete_task(task_id: str, current_user: dict = Depends(get_current_use
 
 # ============= DASHBOARD ENDPOINTS =============
 
+def _sum_billable_hours(tasks: List[dict]) -> float:
+    """Sum task actual_hours, treating missing/null values as 0.
+
+    Task.model_dump() persists actual_hours=None on every create, and Mongo
+    $exists matches null. dict.get('actual_hours', 0) still returns None when
+    the key is present, so a raw sum() TypeErrors and 500s the dashboard.
+    """
+    total = 0.0
+    for task in tasks:
+        hours = task.get("actual_hours")
+        if hours is None:
+            continue
+        try:
+            total += float(hours)
+        except (TypeError, ValueError):
+            continue
+    return total
+
+
 @api_router.get("/dashboard/stats", response_model=DashboardStats)
 async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     """Get dashboard statistics"""
@@ -659,7 +678,7 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         
         # Calculate billable hours from tasks
         tasks = await db.tasks.find({"actual_hours": {"$exists": True}}, {"_id": 0, "actual_hours": 1}).to_list(1000)
-        billable_hours = sum(task.get('actual_hours', 0) for task in tasks)
+        billable_hours = _sum_billable_hours(tasks)
 
         now = datetime.now(timezone.utc)
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
