@@ -142,3 +142,82 @@ backend/.venv/bin/python scripts/create-staff-user.py \
 | SEO audits, Stripe, contact form | MongoDB |
 | Project `client_id` + `type` | MongoDB `project_meta` |
 | Contacts/clients, project core fields | Agiled |
+
+## Agiled CRM mode
+
+The backend uses Agiled as the source of truth for CRM contacts and project
+records when both of these are true:
+
+- `USE_AGILED_CRM=true`
+- `AGILED_API_KEY` is set
+
+If either condition is missing, `/api/clients` and `/api/projects` fall back to
+the MongoDB `clients` and `projects` collections. Production should set the
+Agiled variables directly on the API host; local development can also reuse
+`services/agiled/.env` because `backend/agiled_client.py` loads it when the
+backend `.env.local` has no Agiled key.
+
+### API behavior
+
+| App endpoint | Agiled object | MongoDB dependency |
+|--------------|---------------|--------------------|
+| `GET/POST/PUT /api/clients` | Contacts | None in Agiled mode |
+| `DELETE /api/clients/{id}` | Not implemented | Returns `501`; delete contacts in Agiled |
+| `GET/POST/PUT/DELETE /api/projects` | Projects | `project_meta` stores app-only fields |
+| `GET /api/integrations/agiled/status` | `/me` health check | Auth required |
+
+Project `client_id` and `type` are not returned by Agiled in the shape this app
+needs, so the backend writes them to MongoDB `project_meta` using the Agiled
+project ID as `project_id`. This means:
+
+- `GET /api/projects?client_id=...` can only filter Agiled projects that have a
+  matching `project_meta` row.
+- Creating or updating a project in the app keeps `project_meta` in sync.
+- Deleting a project through the app deletes both the Agiled project and its
+  `project_meta` row.
+- Use `scripts/migrate-dev-to-atlas.py` if local `backend/data/project_meta.json`
+  records need to be copied into Atlas.
+
+### Field mapping constraints
+
+- Client create/update maps app fields to Agiled contact fields:
+  `name -> first_name/last_name`, `email`, `phone`, `company -> company_name`,
+  `website`, and `notes`.
+- Client status is displayed from Agiled contact status. The app does not keep a
+  separate MongoDB client status while Agiled mode is active.
+- Project statuses are translated:
+  - app `active` -> Agiled `active`
+  - app `completed` -> Agiled `completed`
+  - app `on-hold` -> Agiled `planning`
+  - Agiled `planning`, `in_progress`, or `active` -> app `active`
+  - Agiled `on_hold` or `cancelled` -> app `on-hold`
+- Project `start_date` and `deadline` are sent to Agiled as dates
+  (`YYYY-MM-DD`). Agiled date responses are normalized back to ISO datetimes.
+
+### Verification and troubleshooting
+
+Check the API health response after deploy:
+
+```bash
+curl https://api.cswp.dev/health
+# expect: "agiled_configured": true
+```
+
+Check the authenticated Agiled connection:
+
+```bash
+curl https://api.cswp.dev/api/integrations/agiled/status \
+  -H "Authorization: Bearer $JWT"
+```
+
+Common failure modes:
+
+- `{"configured": false}` from `/api/integrations/agiled/status` means
+  `AGILED_API_KEY` is missing in the API runtime.
+- A `502` detail containing `Agiled API unreachable` means the backend could not
+  reach Agiled within the configured HTTP timeout.
+- A 4xx/5xx from Agiled is passed through as the FastAPI response status with a
+  generic `Agiled API <method> <path> failed...` detail; reproduce against
+  Agiled directly when the upstream error payload is needed.
+- Missing projects for a client filter usually means the Agiled project exists
+  but the MongoDB `project_meta` linkage row was never created or migrated.
