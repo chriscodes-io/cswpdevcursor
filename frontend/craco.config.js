@@ -68,6 +68,14 @@ const webpackConfig = {
         webpackConfig.plugins.push(healthPluginInstance);
       }
 
+      // Production builds: drop ESLint/TS checker plugins that can hang on some machines
+      if (process.env.NODE_ENV === 'production') {
+        webpackConfig.plugins = webpackConfig.plugins.filter((plugin) => {
+          const name = plugin?.constructor?.name || '';
+          return name !== 'ESLintWebpackPlugin' && name !== 'ForkTsCheckerWebpackPlugin';
+        });
+      }
+
       return webpackConfig;
     },
   },
