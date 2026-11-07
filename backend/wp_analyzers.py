@@ -166,11 +166,13 @@ class SEOAnalyzer:
         recommendations = []
         details = {}
         
-        # Meta tags
+        # Meta tags. Use get_text() — Tag.string is None for empty titles
+        # (<title></title>) and titles with mixed children, which would crash
+        # later at len(title_text).
         title = soup.find("title")
-        title_text = title.string if title else ""
+        title_text = (title.get_text() if title else "") or ""
         meta_desc = soup.find("meta", {"name": "description"})
-        meta_desc_content = meta_desc.get("content", "") if meta_desc else ""
+        meta_desc_content = (meta_desc.get("content") if meta_desc else "") or ""
         viewport = soup.find("meta", {"name": "viewport"})
         
         if not title_text:
