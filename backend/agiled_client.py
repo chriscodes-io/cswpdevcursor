@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 from typing import Any, Optional
+from urllib.parse import quote, unquote
 
 import httpx
 from dotenv import load_dotenv
@@ -26,6 +28,22 @@ class AgiledError(Exception):
         super().__init__(message)
         self.status_code = status_code
         self.payload = payload
+
+
+_SAFE_PATH_SEGMENT = re.compile(r"^[A-Za-z0-9_-]+$")
+
+
+def _safe_path_segment(value: str, label: str = "id") -> str:
+    """Reject path separators/traversal before interpolating IDs into Agiled URLs."""
+    if not isinstance(value, str) or not value:
+        raise AgiledError(f"Invalid {label}", 400)
+    try:
+        decoded = unquote(value)
+    except Exception as exc:  # pragma: no cover - unquote rarely raises
+        raise AgiledError(f"Invalid {label}", 400) from exc
+    if not _SAFE_PATH_SEGMENT.fullmatch(decoded):
+        raise AgiledError(f"Invalid {label}", 400)
+    return quote(decoded, safe="")
 
 
 def is_configured() -> bool:
@@ -96,7 +114,7 @@ async def list_contacts(
 
 
 async def get_contact(contact_id: str) -> dict[str, Any]:
-    return await _request("GET", f"/contacts/{contact_id}")
+    return await _request("GET", f"/contacts/{_safe_path_segment(contact_id, 'contact_id')}")
 
 
 async def create_contact(body: dict[str, Any], idempotency_key: Optional[str] = None) -> dict[str, Any]:
@@ -104,7 +122,11 @@ async def create_contact(body: dict[str, Any], idempotency_key: Optional[str] = 
 
 
 async def update_contact(contact_id: str, body: dict[str, Any]) -> dict[str, Any]:
-    return await _request("PATCH", f"/contacts/{contact_id}", json_body=body)
+    return await _request(
+        "PATCH",
+        f"/contacts/{_safe_path_segment(contact_id, 'contact_id')}",
+        json_body=body,
+    )
 
 
 async def list_projects(
@@ -115,7 +137,7 @@ async def list_projects(
 
 
 async def get_project(project_id: str) -> dict[str, Any]:
-    return await _request("GET", f"/projects/{project_id}")
+    return await _request("GET", f"/projects/{_safe_path_segment(project_id, 'project_id')}")
 
 
 async def create_project(body: dict[str, Any], idempotency_key: Optional[str] = None) -> dict[str, Any]:
@@ -123,11 +145,15 @@ async def create_project(body: dict[str, Any], idempotency_key: Optional[str] = 
 
 
 async def update_project(project_id: str, body: dict[str, Any]) -> dict[str, Any]:
-    return await _request("PATCH", f"/projects/{project_id}", json_body=body)
+    return await _request(
+        "PATCH",
+        f"/projects/{_safe_path_segment(project_id, 'project_id')}",
+        json_body=body,
+    )
 
 
 async def delete_project(project_id: str) -> dict[str, Any]:
-    return await _request("DELETE", f"/projects/{project_id}")
+    return await _request("DELETE", f"/projects/{_safe_path_segment(project_id, 'project_id')}")
 
 
 _APP_TO_AGILED_STATUS = {

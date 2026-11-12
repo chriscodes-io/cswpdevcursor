@@ -1,4 +1,5 @@
 import { config } from "../../config.js";
+import { toSafePathSegment } from "./pathSegment.js";
 import {
   AgiledApiError,
   AgiledItemResponse,
@@ -82,7 +83,7 @@ export class AgiledClient {
   }
 
   getContact(contactId: string, query?: ListQuery): Promise<AgiledItemResponse<AgiledResource>> {
-    return this.request(`/contacts/${contactId}`, { query });
+    return this.request(`/contacts/${toSafePathSegment(contactId, "contactId")}`, { query });
   }
 
   createContact(body: Record<string, unknown>, idempotencyKey?: string): Promise<AgiledItemResponse<AgiledResource>> {
@@ -90,7 +91,7 @@ export class AgiledClient {
   }
 
   updateContact(contactId: string, body: Record<string, unknown>): Promise<AgiledItemResponse<AgiledResource>> {
-    return this.request(`/contacts/${contactId}`, { method: "PATCH", body });
+    return this.request(`/contacts/${toSafePathSegment(contactId, "contactId")}`, { method: "PATCH", body });
   }
 
   listAccounts(query?: ListQuery): Promise<AgiledListResponse<AgiledResource>> {
@@ -98,7 +99,7 @@ export class AgiledClient {
   }
 
   getAccount(accountId: string, query?: ListQuery): Promise<AgiledItemResponse<AgiledResource>> {
-    return this.request(`/accounts/${accountId}`, { query });
+    return this.request(`/accounts/${toSafePathSegment(accountId, "accountId")}`, { query });
   }
 
   createAccount(body: Record<string, unknown>, idempotencyKey?: string): Promise<AgiledItemResponse<AgiledResource>> {
@@ -106,7 +107,7 @@ export class AgiledClient {
   }
 
   updateAccount(accountId: string, body: Record<string, unknown>): Promise<AgiledItemResponse<AgiledResource>> {
-    return this.request(`/accounts/${accountId}`, { method: "PATCH", body });
+    return this.request(`/accounts/${toSafePathSegment(accountId, "accountId")}`, { method: "PATCH", body });
   }
 
   listDeals(query?: ListQuery): Promise<AgiledListResponse<AgiledResource>> {
@@ -114,7 +115,7 @@ export class AgiledClient {
   }
 
   getDeal(dealId: string, query?: ListQuery): Promise<AgiledItemResponse<AgiledResource>> {
-    return this.request(`/deals/${dealId}`, { query });
+    return this.request(`/deals/${toSafePathSegment(dealId, "dealId")}`, { query });
   }
 
   createDeal(body: Record<string, unknown>, idempotencyKey?: string): Promise<AgiledItemResponse<AgiledResource>> {
@@ -122,7 +123,7 @@ export class AgiledClient {
   }
 
   updateDeal(dealId: string, body: Record<string, unknown>): Promise<AgiledItemResponse<AgiledResource>> {
-    return this.request(`/deals/${dealId}`, { method: "PATCH", body });
+    return this.request(`/deals/${toSafePathSegment(dealId, "dealId")}`, { method: "PATCH", body });
   }
 
   listTickets(query?: ListQuery): Promise<AgiledListResponse<AgiledResource>> {
@@ -154,7 +155,10 @@ export class AgiledClient {
   }
 
   deleteWebhookSubscription(subscriptionId: string): Promise<void> {
-    return this.request(`/webhook-subscriptions/${subscriptionId}`, { method: "DELETE" });
+    return this.request(
+      `/webhook-subscriptions/${toSafePathSegment(subscriptionId, "subscriptionId")}`,
+      { method: "DELETE" },
+    );
   }
 }
 
